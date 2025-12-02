@@ -1,8 +1,7 @@
 'use client';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-// use your own icon import if react-icons is not available
-import { GoArrowUpRight } from 'react-icons/go';
+import { MapPin } from 'lucide-react';
 import Link from 'next/link';
 
 type CardNavLink = {
@@ -19,7 +18,7 @@ export type CardNavItem = {
 };
 
 export interface CardNavProps {
-  logo?: React.ReactNode; 
+  logo?: React.ReactNode;          // ⬅️ đổi sang React.ReactNode
   logoAlt?: string;
   items: CardNavItem[];
   className?: string;
@@ -97,7 +96,11 @@ const CardNav: React.FC<CardNavProps> = ({
       ease
     });
 
-    tl.to(cardsRef.current, { y: 0, opacity: 1, duration: 0.4, ease, stagger: 0.08 }, '-=0.1');
+    tl.to(
+      cardsRef.current,
+      { y: 0, opacity: 1, duration: 0.4, ease, stagger: 0.08 },
+      '-=0.1'
+    );
 
     return tl;
   };
@@ -159,12 +162,17 @@ const CardNav: React.FC<CardNavProps> = ({
 
   return (
     <div
-      className={`card-nav-container absolute left-1/2 -translate-x-1/2 w-[90%] max-w-[800px] z-[99] top-[1.2em] md:top-[2em] ${className}`}
+      className={`card-nav-container w-full ${className}`}
     >
-      <nav
+      {/* <nav
         ref={navRef}
         className={`card-nav ${isExpanded ? 'open' : ''} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden will-change-[height]`}
         style={{ backgroundColor: baseColor }}
+      > */}
+      <nav
+          ref={navRef}
+          className={`card-nav ${isExpanded ? 'open' : ''} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden will-change-[height]`}
+          style={{ backgroundColor: baseColor }}
       >
         <div className="card-nav-top absolute inset-x-0 top-0 h-[60px] flex items-center justify-between p-2 pl-[1.1rem] z-[2]">
           <div
@@ -187,23 +195,23 @@ const CardNav: React.FC<CardNavProps> = ({
             />
           </div>
 
-          {/* <div className="logo-container flex items-center md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none">
-            <img src={logo} alt={logoAlt} className="logo h-[28px]" />
-          </div> */}
-            <div className="logo-container flex items-center md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none">
-                {logo}
-            </div>
+          <div className="logo-container flex items-center md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none">
+            {typeof logo === 'string' ? (
+              <img src={logo} alt={logoAlt} className="logo h-[28px]" />
+            ) : (
+              logo
+            )}
+          </div>
             <Link
                 href="/about"
-                className="card-nav-cta-button hidden md:inline-flex border-0 rounded-[calc(0.75rem-0.2rem)] px-4 items-center h-full font-medium cursor-pointer transition-colors duration-300"
+                className="md:inline-flex border-0 rounded-[calc(0.75rem-0.2rem)] px-4 items-center h-full font-medium cursor-pointer transition-colors duration-300"
                 style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
-                aria-label="Go to About page"
-                >
-                ABOUT
+              >
+                  About
             </Link>
 
         </div>
-
+          
         <div
           className={`card-nav-content absolute left-0 right-0 top-[60px] bottom-0 p-2 flex flex-col items-stretch gap-2 justify-start z-[1] ${
             isExpanded ? 'visible pointer-events-auto' : 'invisible pointer-events-none'
@@ -222,15 +230,19 @@ const CardNav: React.FC<CardNavProps> = ({
               </div>
               <div className="nav-card-links mt-auto flex flex-col gap-[2px]">
                 {item.links?.map((lnk, i) => (
-                    <Link
-                        key={`${lnk.label}-${i}`}
-                        href={lnk.href}
-                        aria-label={lnk.ariaLabel || lnk.label}
-                        className="nav-card-link inline-flex items-center gap-[6px] no-underline cursor-pointer transition-opacity duration-300 hover:opacity-75 text-[15px] md:text-[16px]"
-                    >
-                        <GoArrowUpRight className="nav-card-link-icon shrink-0" aria-hidden="true" />
-                        {lnk.label}
-                     </Link>
+                  <a
+                    key={`${lnk.label}-${i}`}
+                    className="nav-card-link inline-flex items-center gap-[6px] no-underline cursor-pointer transition-opacity duration-300 hover:opacity-75 text-[15px] md:text-[16px]"
+                    href={lnk.href}
+                    aria-label={lnk.ariaLabel}
+                  >
+                    <MapPin
+                      className="nav-card-link-icon shrink-0"
+                      aria-hidden="true"
+                      size={16}
+                    />
+                    {lnk.label}
+                  </a>
                 ))}
               </div>
             </div>

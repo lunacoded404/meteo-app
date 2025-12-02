@@ -2,13 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
-import Header from "@/components/Header";
 import ClickSpark from "@/components/ClickSpark";
-import { HeroUIProvider } from "@heroui/react";
-
-
-
-
+import Header from "@/components/Header";
 
 
 const geistSans = Geist({
@@ -31,28 +26,24 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-900 text-white`}
-      >   
-            <ClickSpark
-              sparkColor='#fff'
-              sparkSize={10}
-              sparkRadius={15}
-              sparkCount={8}
-              duration={400}
-            >
-            <Header />
-
-            <main className="min-h-[100vh] pt-[80px]">
-              {children}
-            </main>
-            </ClickSpark>
+      >
+        <ClickSpark
+          sparkColor="#fff"
+          sparkSize={10}
+          sparkRadius={15}
+          sparkCount={8}
+          duration={400}
+        >
+          <Header />
+          {/* <main className="min-h-[100vh] pt-[100px]"> */}
+            {children}
+          {/* </main> */}
+        </ClickSpark>
       </body>
     </html>
   );
 }
-
-

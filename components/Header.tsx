@@ -1,30 +1,34 @@
 "use client";
 
-import CardNav, { CardNavItem } from "@/components/CardNav";
-import { MapPinned } from "lucide-react";
-import SplitText from "@/components/SplitText";
+import React from "react";
+import { MapPin } from "lucide-react";
+import CardNav, { CardNavItem } from "./CardNav";
+import SplitText from "./SplitText";
 
-const navItems: CardNavItem[] = [
-  {
+
+
+const Header: React.FC = () => {
+  const items: CardNavItem[] = [
+     {
     label: "Discover",
     bgColor: "#0D0716",
     textColor: "#ffffff",
     links: [
-        {
+      {
         label: "Overview",
         href: "/discover/overview",
         ariaLabel: "Go to Discover page",
-        },
-        {
+      },
+      {
         label: "Forecast",
         href: "/discover/forecast",
         ariaLabel: "Go to Discover page",
-        },
-        {
+      },
+      {
         label: "Login",
         href: "/discover/login",
         ariaLabel: "Go to Discover page",
-        },
+      },
     ],
   },
   {
@@ -37,22 +41,22 @@ const navItems: CardNavItem[] = [
         href: "/weather/temperature",
         ariaLabel: "Go to Weather page",
       },
-            {
+      {
         label: "Humidity",
         href: "/weather/humidity",
         ariaLabel: "Go to Weather page",
       },
-            {
+      {
         label: "Windy ",
         href: "/weather/windy",
         ariaLabel: "Go to Weather page",
       },
-            {
+      {
         label: "Cloud",
         href: "/weather/cloud",
         ariaLabel: "Go to Weather page",
       },
-            {
+      {
         label: "Rain",
         href: "/weather/rain",
         ariaLabel: "Go to Weather page",
@@ -71,31 +75,28 @@ const navItems: CardNavItem[] = [
       },
     ],
   },
-];
 
-const Header = () => {
+  ];
+
   return (
-    <header className="relative z-[50]">
+    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[800px]">
       <CardNav
         logo={
-          <div className="flex items-center gap-3">
-            <MapPinned className="h-10 w-10 text-sky-400" />
+          <div className="flex items-center gap-2">
+            <MapPin className="w-10 h-10 text-[var(--meteo-color)]" />
             <SplitText
-              text="Weather App"
-              splitType="chars"
-              className="text-lg md:text-xl font-semibold text-gray-900"
-              stagger={0.03}
-              textAlign="left"
+                text="Weather App"
+                className="text-2xl font-semibold text-center text-black"
             />
           </div>
         }
-        logoAlt="Welcome to my WebGIS!!"
-        items={navItems}
-        baseColor="#ffffff"
-        menuColor="#000000"
-        buttonBgColor="#111827"
-        buttonTextColor="#f9fafb"
-        ease="power3.out"
+            logoAlt="Welcome to my WebGIS!"
+            items={items}
+            baseColor="#fff"
+            menuColor="#000"
+            buttonBgColor="#111"
+            buttonTextColor="#fff"
+            ease="power3.out"
       />
     </header>
   );

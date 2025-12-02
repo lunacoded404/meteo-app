@@ -1,13 +1,13 @@
-@import 'tailwindcss';
-/* @import "tw-animate-css"; */
-
-@custom-variant dark (&:is(.dark *));
+@import 'tailwindcss'; 
 
 
 
 
 
-@theme inline {
+
+
+
+/* @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -109,18 +109,26 @@
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0); 
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+} */
+
+
+:root {
+  --meteo-color: #74d4ff; 
 }
 
+
 @layer base {
-  * {
+  /* * {
     @apply border-border outline-ring/50;
-  }
+  } */
   body {
-    @apply bg-background text-foreground;
-  }
+  padding: 0 0;
+  max-width: auto;
+  margin: 0 auto;
+}
 }

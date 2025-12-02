@@ -1,17 +1,12 @@
-import SplitText from "@/components/SplitText";
-import ClickSpark from "@/components/ClickSpark";
+
+
 
 export default function Home() {
   return (
-    <div>
-    <main className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-      <SplitText 
-        text="Hé lô các bạn!!" 
-        splitType="chars"
-        className="text-4xl font-bold"
-        stagger={0.03}
-      />
-    </main>
+    <div className="min-h-screen flex items-center justify-center text-3xl font-bold">
+
+        <h1>Hé lô các bạn!!</h1>
+
     </div>
   );
 }
