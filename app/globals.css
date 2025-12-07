@@ -121,6 +121,11 @@
   --meteo-color: #74d4ff; 
 }
 
+.owm-map .leaflet-tile-pane img {
+  /* Ví dụ: tăng saturation + đổi hue */
+  filter: saturate(1.3) hue-rotate(20deg);
+}
+
 
 @layer base {
   /* * {

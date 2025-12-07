@@ -20,7 +20,8 @@ export default function Map() {
     <div className="h-[100vh] w-full relative">
       <MapClient />
 
-
     </div>
   );
 }
+
+
