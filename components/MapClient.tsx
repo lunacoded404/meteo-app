@@ -147,58 +147,72 @@ export default function MapClient() {
     fetchProvinces();
   }, []);
 
-  // Sự kiện cho từng polygon tỉnh
-  const onEachProvince = (feature: any, layer: L.Layer) => {
-    const props = feature.properties || {};
-    const code = props.code as string;
-    const name = props.name as string;
+// Sự kiện cho từng polygon tỉnh
+const onEachProvince = (feature: any, layer: L.Layer) => {
+  const props = feature.properties || {};
+  const code = props.code as string;
+  const name = props.name as string;
 
-    layer.on({
-      mouseover(e: LeafletMouseEvent) {
-        const target = e.target as L.Path;
-        target.setStyle(highlightProvinceStyle);
-        target.bringToFront();
-      },
-      mouseout(e: LeafletMouseEvent) {
-        const target = e.target as L.Path;
-        if (provincesLayerRef.current) {
-          provincesLayerRef.current.resetStyle(target);
-        } else {
-          target.setStyle(defaultProvinceStyle);
-        }
-      },
-      click: (e: LeafletMouseEvent) => {
-        // Chỉ xử lý popup khi layer Temperature đang bật
-        if (!isTempVisible) return;
-
-        // Mở popup ngay tại vị trí click để phản hồi nhanh
-        setPopupPosition(e.latlng);
-        setPopupLoading(true);
-        setPopupError(null);
-        setWeatherData(null);
-
-        (async () => {
-          try {
-            const res = await fetch(
-              `${API_BASE}/api/provinces/${code}/weather/`
-            );
-            if (!res.ok) {
-              throw new Error("Weather API error");
-            }
-            const data: ProvinceWeather = await res.json();
-            setWeatherData(data);
-          } catch (err) {
-            console.error(err);
-            setPopupError(
-              `Không lấy được dữ liệu từ Open-Meteo cho ${name}.`
-            );
-          } finally {
-            setPopupLoading(false);
-          }
-        })();
-      },
+  // Gắn tooltip hiển thị tên tỉnh
+  if (name) {
+    (layer as any).bindTooltip(name, {
+      direction: "center",     // hiển thị ở giữa polygon
+      permanent: false,        // chỉ hiện khi hover
+      sticky: true,            // bám theo chuột trong polygon
+      opacity: 0.9,
+      className: "province-tooltip", // tuỳ biến CSS nếu muốn
     });
-  };
+  }
+
+  layer.on({
+    mouseover(e: LeafletMouseEvent) {
+      const target = e.target as L.Path;
+      target.setStyle(highlightProvinceStyle);
+      target.bringToFront();
+      (target as any).openTooltip(); // mở tooltip khi hover
+    },
+    mouseout(e: LeafletMouseEvent) {
+      const target = e.target as L.Path;
+      if (provincesLayerRef.current) {
+        provincesLayerRef.current.resetStyle(target);
+      } else {
+        target.setStyle(defaultProvinceStyle);
+      }
+      (target as any).closeTooltip(); // ẩn tooltip khi out
+    },
+    click: (e: LeafletMouseEvent) => {
+      // Chỉ xử lý popup khi layer Temperature đang bật
+      if (!isTempVisible) return;
+
+      // Mở popup ngay tại vị trí click để phản hồi nhanh
+      setPopupPosition(e.latlng);
+      setPopupLoading(true);
+      setPopupError(null);
+      setWeatherData(null);
+
+      (async () => {
+        try {
+          const res = await fetch(
+            `${API_BASE}/api/provinces/${code}/weather/`
+          );
+          if (!res.ok) {
+            throw new Error("Weather API error");
+          }
+          const data: ProvinceWeather = await res.json();
+          setWeatherData(data);
+        } catch (err) {
+          console.error(err);
+          setPopupError(
+            `Không lấy được dữ liệu từ Open-Meteo cho ${name}.`
+          );
+        } finally {
+          setPopupLoading(false);
+        }
+      })();
+    },
+  });
+};
+
 
   // Nếu tắt Temperature thì ẩn popup luôn
   useEffect(() => {
@@ -247,7 +261,7 @@ export default function MapClient() {
         {popupPosition && (
           <Popup
             position={popupPosition}
-            maxWidth={450}   // tăng cho khớp w-[420px]
+            maxWidth={450} // tăng cho khớp w-[420px]
             eventHandlers={{ remove: resetPopup }}
           >
             <TemperaturePopup
@@ -256,7 +270,8 @@ export default function MapClient() {
               error={popupError}
             />
           </Popup>
-      )}
+        )}
+
 
 
       </MapContainer>
