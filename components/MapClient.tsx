@@ -429,13 +429,13 @@ const openProvinceByCode = async (code: string, opts?: OpenProvinceOpts) => {
   }, [activeLayerKey, rainviewerPath]);
 
   return (
-    <div className="h-[100vh] w-full relative">
+    <div className="h-full w-full relative">
       <MapContainer
         ref={mapRef}
         center={center}
         zoom={5}
         maxZoom={12}
-        className="h-[100vh] w-full z-0 owm-map"
+        className="h-full w-full z-0 owm-map"
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

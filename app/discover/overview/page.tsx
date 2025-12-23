@@ -5,6 +5,7 @@ import OverviewFloatingPanel from "@/components/discover/overview/OverviewFloati
 import CurrentSection from "@/components/discover/overview/CurrentSection";
 import HourlySection from "@/components/discover/overview/HourlySection";
 import DetailsSection from "@/components/discover/overview/DetailsSection";
+import MapsSection from "@/components/discover/overview/MapsSection";
 import RegionSearch, { ProvinceIndexItem} from "@/components/discover/overview/RegionSearch";
 
 function Placeholder({ title }: { title: string }) {
@@ -56,6 +57,9 @@ export default function OverviewPage() {
 
             <section id="details" className="scroll-mt-28">
               <DetailsSection />
+            </section>
+            <section id="maps" className="scroll-mt-28">
+              <MapsSection />
             </section>
           </main>
         </div>
