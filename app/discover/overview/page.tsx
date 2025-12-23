@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import OverviewFloatingPanel from "@/components/discover/overview/OverviewFloatingPanel";
 import CurrentSection from "@/components/discover/overview/CurrentSection";
 import HourlySection from "@/components/discover/overview/HourlySection";
+import DetailsSection from "@/components/discover/overview/DetailsSection";
 import RegionSearch, { ProvinceIndexItem} from "@/components/discover/overview/RegionSearch";
 
 function Placeholder({ title }: { title: string }) {
@@ -54,7 +55,7 @@ export default function OverviewPage() {
             </section>
 
             <section id="details" className="scroll-mt-28">
-              <Placeholder title="Details" />
+              <DetailsSection />
             </section>
           </main>
         </div>
