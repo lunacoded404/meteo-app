@@ -49,3 +49,17 @@ class WeatherForecastHourly(models.Model):
 
     def __str__(self):
         return f"{self.province_id} @ {self.forecast_time}"
+
+
+class ForecastCache(models.Model):
+    cache_key = models.TextField(unique=True)
+    lat = models.FloatField()
+    lon = models.FloatField()
+    forecast_days = models.IntegerField(default=10)
+    timezone = models.TextField(null=True, blank=True)
+    payload = models.JSONField()
+    fetched_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "forecast_cache"

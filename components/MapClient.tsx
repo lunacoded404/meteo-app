@@ -1,5 +1,6 @@
 "use client";
 
+
 import { MapContainer, TileLayer, GeoJSON, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import type {
@@ -79,9 +80,13 @@ const OVERLAY_STYLES: Record<WeatherLayerKey, { base: PathOptions; hover: PathOp
 };
 
 export default function MapClient() {
-  const [activeLayerKey, setActiveLayerKey] = useState<WeatherLayerKey | null>(
-    WEATHER_LAYERS.find((l) => l.defaultVisible)?.key ?? null
-  );
+
+  const DEFAULT_LAYER: WeatherLayerKey =
+  WEATHER_LAYERS.find((l) => l.defaultVisible)?.key ?? WEATHER_LAYERS[0].key;
+
+  const [activeLayerKey, setActiveLayerKey] = useState<WeatherLayerKey>(DEFAULT_LAYER);
+
+  
 
   // checkbox chung
   const [showShortTerm, setShowShortTerm] = useState(false);
@@ -121,6 +126,7 @@ export default function MapClient() {
   // ✅ refs để tránh stale state khi click nhanh (checkbox + polygon)
   const showShortTermRef = useRef(showShortTerm);
   const activeLayerKeyRef = useRef(activeLayerKey);
+
 
   useEffect(() => {
     showShortTermRef.current = showShortTerm;
@@ -173,24 +179,31 @@ export default function MapClient() {
   };
 
   const toggleLayer = (key: WeatherLayerKey) => {
-    setActiveLayerKey((prev) => (prev === key ? null : key));
-    resetPopup();
+    // ✅ Nếu bấm đúng layer đang active -> không làm gì (vẫn giữ 1 layer luôn được chọn)
+    if (activeLayerKeyRef.current === key) return;
+
+    setActiveLayerKey(key);
+    resetPopup(); // ✅ chỉ reset khi đổi layer thật sự
   };
 
+
+
   // Fetch provinces GeoJSON
-  useEffect(() => {
-    const fetchProvinces = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/provinces/`);
-        if (!res.ok) throw new Error("Failed to load provinces");
-        const data = await res.json();
-        setProvinceGeojson(data);
-      } catch (err) {
-        console.error("Error loading provinces:", err);
-      }
-    };
-    fetchProvinces();
-  }, []);
+useEffect(() => {
+  const fetchProvinces = async () => {
+    try {
+      const url = new URL("/api/provinces/", API_BASE).toString();
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Failed to load provinces: HTTP ${res.status} @ ${url}`);
+      const data = await res.json();
+      setProvinceGeojson(data);
+    } catch (err) {
+      console.error("Error loading provinces:", err);
+    }
+  };
+  fetchProvinces();
+}, []);
+
 
   // Fetch RainViewer path
   useEffect(() => {
@@ -214,11 +227,10 @@ export default function MapClient() {
     fetchRainviewer();
   }, []);
 
-  // overlay style
   const styleProvince = (): PathOptions => {
-    if (!activeLayerKey) return OVERLAY_STYLES.temp.base;
     return OVERLAY_STYLES[activeLayerKey].base;
   };
+
 
   // helper: fetch json safe
   async function fetchJsonSafe<T>(url: string): Promise<T> {
@@ -243,15 +255,22 @@ export default function MapClient() {
 };
 
 const openProvinceByCode = async (code: string, opts?: OpenProvinceOpts) => {
+
   const { name, latlng, zoom = false } = opts ?? {};
 
-  // nếu chưa chọn layer thì default về temp
-  if (!activeLayerKeyRef.current) {
-    activeLayerKeyRef.current = "temp";
-    setActiveLayerKey("temp");
+   // ✅ đảm bảo có tên (fallback lấy từ GeoJSON layer nếu opts.name thiếu)
+  let regionName = name ?? "";
+  if (!regionName && provincesLayerRef.current) {
+    provincesLayerRef.current.eachLayer((l: any) => {
+      if (l?.feature?.properties?.code === code) {
+        regionName = String(l?.feature?.properties?.name ?? "");
+      }
+    });
   }
-  const k = activeLayerKeyRef.current;
-  if (!k) return;
+
+
+  const k = activeLayerKeyRef.current; // luôn có
+
 
   let centerLL: L.LatLng | null = latlng ?? null;
 
@@ -433,7 +452,7 @@ const openProvinceByCode = async (code: string, opts?: OpenProvinceOpts) => {
           />
         )}
 
-        {provinceGeojson && activeLayerKey && (
+        {provinceGeojson && (
           <GeoJSON
             key={`overlay-${activeLayerKey}`}
             data={provinceGeojson as any}
@@ -443,7 +462,8 @@ const openProvinceByCode = async (code: string, opts?: OpenProvinceOpts) => {
           />
         )}
 
-        {popupPosition && activeLayerKey && (
+
+        {popupPosition && (
           <Popup
             key={`${activeLayerKey}-${popupLoading ? "loading" : "ready"}`}
             className={["meteo-popup", popupLoading ? "is-loading" : ""].join(" ")}
@@ -474,7 +494,7 @@ const openProvinceByCode = async (code: string, opts?: OpenProvinceOpts) => {
       <div className="absolute top-20 left-5 z-[1000]">
         <ProvinceSearchBar
           items={provinceIndex}
-          onSelect={(it) => openProvinceByCode(it.code, { name: it.name, zoom: true })}
+         onSelect={(it: ProvinceIndexItem) => openProvinceByCode(it.code, { name: it.name, zoom: true })}
           placeholder="Tìm theo tên tỉnh/thành..."
         />
       </div>

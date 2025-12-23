@@ -4,10 +4,14 @@ from . import views
 urlpatterns = [
     path("provinces/", views.provinces_geojson),
 
+    path("provinces/<str:code>/current/", views.province_current),
+
     path("provinces/<str:code>/weather/", views.province_weather),
     path("provinces/<str:code>/wind/", views.province_wind),
     path("provinces/<str:code>/rain/", views.province_rain),
-
     path("provinces/<str:code>/humidity/", views.province_humidity),
     path("provinces/<str:code>/cloud/", views.province_cloud),
+
+    # ✅ bundle đúng hệ
+    path("provinces/<str:code>/bundle/", views.province_bundle),
 ]

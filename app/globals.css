@@ -21,95 +21,28 @@
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.4);
 }
 
-/* Popup z-index */
-.leaflet-popup-pane {
-  z-index: 900 !important;
-}
 
-/* =========================================
-   Meteo Popup: CHỈ DÙNG wrapper Leaflet (card)
-   className="meteo-popup"
-========================================= */
-.leaflet-popup.meteo-popup .leaflet-popup-content-wrapper {
-  /* Wrapper chính là "card" */
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(226, 232, 240, 1) !important; /* slate-200 */
-  border-radius: 18px !important;
-
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18) !important;
-
-  /* Padding đặt ở wrapper để content bên trong chỉ render text */
-  padding: 12px 14px !important;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  /* Để nút X không bị cắt */
-  overflow: visible !important;
-}
-
-/* Bỏ margin mặc định của Leaflet để khỏi “thêm một lớp” */
-.leaflet-popup.meteo-popup .leaflet-popup-content {
+/* Popup */
+/* Leaflet popup polish */
+.leaflet-popup-content {
   margin: 0 !important;
-  white-space: normal !important;
-  min-width: 0 !important;
 }
-
-/* Tip (mũi tên). Nếu bạn muốn bỏ hẳn mũi tên: đổi thành display:none */
-.leaflet-popup.meteo-popup .leaflet-popup-tip {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(226, 232, 240, 1) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important;
-}
-
-/* Chống tràn chữ */
-.leaflet-popup.meteo-popup .leaflet-popup-content-wrapper * {
-  overflow-wrap: anywhere !important;
-  word-break: break-word !important;
-  min-width: 0 !important;
-}
-
-/* Nút CLOSE (X) */
-.leaflet-popup.meteo-popup a.leaflet-popup-close-button {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-
-  position: absolute !important;
-  top: 8px !important;
-  right: 10px !important;
-
-  width: 28px !important;
-  height: 28px !important;
-  line-height: 28px !important;
-
+.leaflet-popup-content-wrapper {
   padding: 0 !important;
-  margin: 0 !important;
-  border: 0 !important;
-
-  font-size: 22px !important;
-  font-weight: 700 !important;
-
-  border-radius: 9999px !important;
-  color: #64748b !important; /* slate-500 */
-  background: transparent !important;
-
-  z-index: 9999 !important;
+  border-radius: 16px !important;
+}
+.meteo-popup .leaflet-popup-content-wrapper {
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18) !important;
+}
+.meteo-popup .leaflet-popup-tip {
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12) !important;
 }
 
-.leaflet-popup.meteo-popup a.leaflet-popup-close-button:hover {
-  color: #0f172a !important; /* slate-900 */
-  background: rgba(148, 163, 184, 0.15) !important;
+html {
+  scroll-behavior: smooth;
 }
 
-/* Ẩn nút X khi đang loading */
-.leaflet-popup.meteo-popup.is-loading a.leaflet-popup-close-button {
-  display: none !important;
-}
 
-/* =========================================
-   Base
-========================================= */
 @layer base {
   body {
     padding: 0;
