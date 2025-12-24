@@ -6,6 +6,7 @@ import CurrentSection from "@/components/discover/overview/CurrentSection";
 import HourlySection from "@/components/discover/overview/HourlySection";
 import DetailsSection from "@/components/discover/overview/DetailsSection";
 import MapsSection from "@/components/discover/overview/MapsSection";
+import TrendsSection from "@/components/discover/overview/TrendsSection";
 import RegionSearch, { ProvinceIndexItem} from "@/components/discover/overview/RegionSearch";
 
 function Placeholder({ title }: { title: string }) {
@@ -35,7 +36,7 @@ export default function OverviewPage() {
         <div className="relative min-h-[calc(100vh-108px)]">
           <OverviewFloatingPanel />
 
-          {/* ✅ chỉ 1 RegionSearch */}
+          {/* ✅ chỉ 1 RegionSearch
           <div className="relative z-20 md:pl-[220px] pt-3">
             <div className="max-w-[380px]">
               <RegionSearch
@@ -44,7 +45,7 @@ export default function OverviewPage() {
                 onChange={setSelectedRegion}
               />
             </div>
-          </div>
+          </div> */}
 
           <main className="relative z-10 md:pl-[220px] py-6 space-y-6">
             <section id="current" className="scroll-mt-28">
@@ -60,6 +61,9 @@ export default function OverviewPage() {
             </section>
             <section id="maps" className="scroll-mt-28">
               <MapsSection />
+            </section>
+            <section id="trends" className="scroll-mt-28">
+              <TrendsSection />
             </section>
           </main>
         </div>
