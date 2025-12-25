@@ -369,7 +369,7 @@ export default function TrendsCard({
           {/* Daily summary */}
           <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 text-white/85 text-[13px] font-semibold">
-              Tổng hợp theo ngày ({vm.rangeLabel})
+              Tổng hợp theo ngày 
             </div>
 
             <div className="grid grid-cols-4 bg-white/5 px-4 py-2 text-[12px] text-white/70">

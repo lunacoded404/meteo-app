@@ -1,9 +1,6 @@
-// src/components/discover/overview/OverviewFloatingPanel.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   SunMedium,
   Clock3,
@@ -11,100 +8,124 @@ import {
   Map,
   CalendarDays,
   TrendingUp,
-  Newspaper,
   ArrowUp,
   RotateCcw,
 } from "lucide-react";
 
-type ItemKey =
-  | "current"
-  | "hourly"
-  | "details"
-  | "maps"
-  | "monthly"
-  | "trends"
-  | "news";
+type ItemKey = "current" | "hourly" | "details" | "maps" | "monthly" | "trends";
 
 type NavItem = {
   key: ItemKey;
   label: string;
   icon: React.ReactNode;
-  hrefHash: `#${ItemKey}`;
 };
 
 function cx(...cls: Array<string | false | null | undefined>) {
   return cls.filter(Boolean).join(" ");
 }
 
-export default function OverviewFloatingPanel() {
-  const pathname = usePathname();
+/**
+ * Header offset để scroll đúng vị trí (vì bạn có <div className="h-[108px]" /> và scroll-mt-28)
+ * 28 = 7rem = 112px gần đúng, mình dùng 112 cho chắc.
+ */
+const SCROLL_OFFSET = 112;
 
+function scrollToId(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const top = el.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET;
+  window.scrollTo({ top, behavior: "smooth" });
+}
+
+export default function OverviewFloatingPanel() {
   const items: NavItem[] = useMemo(
     () => [
-      { key: "current", label: "Current", icon: <SunMedium className="h-4 w-4" />, hrefHash: "#current" },
-      { key: "hourly", label: "Hourly", icon: <Clock3 className="h-4 w-4" />, hrefHash: "#hourly" },
-      { key: "details", label: "Details", icon: <LayoutList className="h-4 w-4" />, hrefHash: "#details" },
-      { key: "maps", label: "Maps", icon: <Map className="h-4 w-4" />, hrefHash: "#maps" },
-      { key: "monthly", label: "Monthly", icon: <CalendarDays className="h-4 w-4" />, hrefHash: "#monthly" },
-      { key: "trends", label: "Trends", icon: <TrendingUp className="h-4 w-4" />, hrefHash: "#trends" },
-      { key: "news", label: "News", icon: <Newspaper className="h-4 w-4" />, hrefHash: "#news" },
+      { key: "current", label: "Hiện Tại", icon: <SunMedium className="h-4 w-4" /> },
+      { key: "hourly", label: "Theo Giờ", icon: <Clock3 className="h-4 w-4" /> },
+      { key: "details", label: "Chi Tiết", icon: <LayoutList className="h-4 w-4" /> },
+      { key: "maps", label: "Bản đồ", icon: <Map className="h-4 w-4" /> },
+      { key: "monthly", label: "Theo ngày", icon: <CalendarDays className="h-4 w-4" /> },
+      { key: "trends", label: "Xu hướng", icon: <TrendingUp className="h-4 w-4" /> },
     ],
     []
   );
 
   const [active, setActive] = useState<ItemKey>("current");
+  const clickScrollingRef = useRef(false);
 
-  // 1) Active theo hash nếu có
+  // 1) vào trang có #hash -> scroll đúng section
   useEffect(() => {
-    const onHash = () => {
-      const h = (window.location.hash || "#current").replace("#", "") as ItemKey;
-      if (items.some((it) => it.key === h)) setActive(h);
-    };
-    onHash();
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
+    const h = (window.location.hash || "#current").replace("#", "") as ItemKey;
+    if (items.some((it) => it.key === h)) {
+      setActive(h);
+      // delay 1 tick để DOM render xong
+      setTimeout(() => scrollToId(h), 0);
+    }
   }, [items]);
 
-  // 2) Active theo section đang visible (khi scroll)
+  // 2) Active theo section visible khi scroll
   useEffect(() => {
     const sectionEls = items
       .map((it) => document.getElementById(it.key))
       .filter(Boolean) as HTMLElement[];
+
     if (!sectionEls.length) return;
 
     const io = new IntersectionObserver(
       (entries) => {
-        // chọn entry có intersectionRatio cao nhất
+        // Nếu đang click-scroll, đừng để IO giật active/hash
+        if (clickScrollingRef.current) return;
+
         const visible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0];
-        if (!visible?.target?.id) return;
 
-        const id = visible.target.id as ItemKey;
-        // Nếu user đang dùng hash, vẫn sync active cho đẹp
+        const id = visible?.target?.id as ItemKey | undefined;
+        if (!id) return;
+
         setActive(id);
+
+        // sync hash (không tạo history mới)
+        if (window.location.hash !== `#${id}`) {
+          window.history.replaceState(null, "", `#${id}`);
+        }
       },
       {
         root: null,
         threshold: [0.15, 0.25, 0.35, 0.5, 0.65],
-        rootMargin: "-20% 0px -55% 0px", // ưu tiên section ở gần đầu viewport
+        rootMargin: "-20% 0px -55% 0px",
       }
     );
 
     sectionEls.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [items, pathname]);
+  }, [items]);
 
-  const baseHref = "/discover/overview";
+  const onPick = (key: ItemKey) => {
+    // đảm bảo key tồn tại trong DOM
+    const el = document.getElementById(key);
+    if (!el) return;
+
+    setActive(key);
+
+    // tạo history để share link
+    if (window.location.hash !== `#${key}`) {
+      window.history.pushState(null, "", `#${key}`);
+    }
+
+    // chặn IO trong lúc scroll smooth
+    clickScrollingRef.current = true;
+    scrollToId(key);
+
+    // thả sau 600ms (đủ cho smooth scroll)
+    window.setTimeout(() => {
+      clickScrollingRef.current = false;
+    }, 600);
+  };
 
   return (
-    <aside
-      className={cx(
-        "fixed left-4 top-1/2 -translate-y-1/2 z-50",
-        "w-[176px] select-none"
-      )}
-      aria-label="Overview navigation"
-    >
+    <aside className={cx("fixed left-4 top-1/2 -translate-y-1/2 z-50", "w-[176px] select-none")}>
       <div
         className={cx(
           "rounded-[28px] px-3 py-3",
@@ -116,17 +137,15 @@ export default function OverviewFloatingPanel() {
           {items.map((it) => {
             const isActive = it.key === active;
             return (
-              <Link
+              <button
                 key={it.key}
-                href={`${baseHref}${it.hrefHash}`}
-                scroll={true}
+                type="button"
+                onClick={() => onPick(it.key)}
                 className={cx(
-                  "flex items-center gap-3",
+                  "flex items-center gap-3 w-full text-left",
                   "rounded-full px-3 py-2",
                   "transition-colors",
-                  isActive
-                    ? "bg-[#FFD84D] text-slate-900"
-                    : "text-white/90 hover:bg-white/10"
+                  isActive ? "bg-[#FFD84D] text-slate-900" : "text-white/90 hover:bg-white/10"
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
@@ -144,7 +163,7 @@ export default function OverviewFloatingPanel() {
                 <span className={cx("text-[14px] font-semibold", !isActive && "font-medium")}>
                   {it.label}
                 </span>
-              </Link>
+              </button>
             );
           })}
         </nav>

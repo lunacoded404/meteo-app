@@ -186,6 +186,17 @@ export default function MapClient() {
     resetPopup(); // ✅ chỉ reset khi đổi layer thật sự
   };
 
+const fetchRainviewer = async () => {
+  try {
+    const res = await fetch("/api/rainviewer", { cache: "no-store" });
+    if (!res.ok) throw new Error(`proxy ${res.status}`);
+    const json = await res.json();
+    const nowcast = json?.radar?.nowcast;
+    // ... xử lý như cũ
+  } catch (err) {
+    console.warn("RainViewer fetch failed:", err);
+  }
+};
 
 
   // Fetch provinces GeoJSON
@@ -209,7 +220,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchRainviewer = async () => {
       try {
-        const res = await fetch(RAINVIEWER_API);
+        const res = await fetch("/api/rainviewer", { cache: "no-store" });
         if (!res.ok) return;
         const json = await res.json();
         const nowcast = json?.radar?.nowcast;

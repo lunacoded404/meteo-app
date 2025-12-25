@@ -95,9 +95,12 @@ export default function HourlyCard({
     <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
       <div className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <div className="text-white text-[18px] font-semibold">Hourly</div>
+          <div className="text-white text-[18px] font-semibold">Dự báo theo giờ (7 ngày)</div>
           <div className="text-white/70 text-[12px]">
-            Khu vực: {region.name} • {region.lat.toFixed(3)}, {region.lon.toFixed(3)}
+            Khu vực: {region.name}
+          </div>
+          <div className="text-white/70 text-[12px]">
+            Tọa độ địa lý: {region.lat.toFixed(3)}, {region.lon.toFixed(3)}
           </div>
         </div>
 
@@ -123,7 +126,7 @@ export default function HourlyCard({
                 view === "chart" ? "bg-[#FFD84D] text-slate-900" : "text-white/85 hover:bg-white/10"
               )}
             >
-              <BarChart3 className="h-4 w-4" /> Chart
+              <BarChart3 className="h-4 w-4" /> Biểu đồ
             </button>
             <button
               type="button"
@@ -133,7 +136,7 @@ export default function HourlyCard({
                 view === "list" ? "bg-[#FFD84D] text-slate-900" : "text-white/85 hover:bg-white/10"
               )}
             >
-              <List className="h-4 w-4" /> List
+              <List className="h-4 w-4" /> Danh sách
             </button>
           </div>
         </div>

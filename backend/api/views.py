@@ -114,12 +114,23 @@ def _get_province_coord(code: str):
 def _normalize_bundle(raw: dict) -> dict:
     """
     Convert Open-Meteo arrays => list objects, and reshape to frontend-friendly schema.
+
+    Output schema:
+    {
+      "location": {...},
+      "current": {...},
+      "hourly": [ ... ],
+      "daily": [ ... ],   # daily points (forecast_days) with temp/humidity/wind/cloud/rain
+      "meta": {...}
+    }
     """
     tz_name = raw.get("timezone")
     lat = raw.get("latitude")
     lon = raw.get("longitude")
 
-    current = (raw.get("current") or {}).copy()
+    # Open-Meteo có thể trả "current" (khi dùng params current=...)
+    # hoặc "current_weather" (khi dùng current_weather=true)
+    current = (raw.get("current") or raw.get("current_weather") or {}).copy()
 
     def _fill_current_if_missing(cur_key: str, hourly_key: str):
         if current.get(cur_key) is not None:
@@ -129,26 +140,36 @@ def _normalize_bundle(raw: dict) -> dict:
             current[cur_key] = v
             current["time"] = current.get("time") or t
 
+    # current fallback từ hourly (nếu thiếu)
     _fill_current_if_missing("temperature_2m", "temperature_2m")
     _fill_current_if_missing("apparent_temperature", "apparent_temperature")
     _fill_current_if_missing("relative_humidity_2m", "relative_humidity_2m")
     _fill_current_if_missing("precipitation", "precipitation")
+    _fill_current_if_missing("precipitation_probability", "precipitation_probability")
     _fill_current_if_missing("cloud_cover", "cloud_cover")
     _fill_current_if_missing("wind_speed_10m", "wind_speed_10m")
     _fill_current_if_missing("wind_direction_10m", "wind_direction_10m")
 
+    # current schema cho frontend
     cur = {
         "time": current.get("time"),
-        "temperature_c": current.get("temperature_2m"),
+        # current_weather (legacy) dùng key "temperature" và "windspeed"/"winddirection"
+        "temperature_c": current.get("temperature_2m", current.get("temperature")),
         "feels_like_c": current.get("apparent_temperature"),
         "humidity_percent": current.get("relative_humidity_2m"),
         "rain_mm": current.get("precipitation"),
+        "rain_prob_percent": current.get("precipitation_probability"),
         "cloud_percent": current.get("cloud_cover"),
-        "wind_speed": current.get("wind_speed_10m"),
-        "wind_direction_deg": current.get("wind_direction_10m"),
-        "wind_direction_label": _deg_to_compass(current.get("wind_direction_10m")),
+        "wind_speed": current.get("wind_speed_10m", current.get("windspeed")),
+        "wind_direction_deg": current.get("wind_direction_10m", current.get("winddirection")),
+        "wind_direction_label": _deg_to_compass(
+            current.get("wind_direction_10m", current.get("winddirection"))
+        ),
     }
 
+    # -------------------------
+    # Hourly
+    # -------------------------
     hourly = raw.get("hourly") or {}
     h_time = hourly.get("time") or []
 
@@ -185,6 +206,49 @@ def _normalize_bundle(raw: dict) -> dict:
             "wind_direction_label": wd_label,
         })
 
+    # helper: group hourly values by day (YYYY-MM-DD)
+    def _hourly_group_by_date(field: str) -> dict[str, list[float]]:
+        buckets: dict[str, list[float]] = {}
+        for p in hourly_points:
+            v = p.get(field)
+            if v is None:
+                continue
+            day = str(p.get("time", ""))[:10]
+            if not day:
+                continue
+            try:
+                buckets.setdefault(day, []).append(float(v))
+            except Exception:
+                continue
+        return buckets
+
+    def _mean(xs: list[float]) -> float | None:
+        return (sum(xs) / len(xs)) if xs else None
+
+    def _max(xs: list[float]) -> float | None:
+        return max(xs) if xs else None
+
+    def _dominant_wind_dir_deg(xs_deg: list[float]) -> float | None:
+        """
+        Lấy hướng gió 'dominant' kiểu histogram 16 hướng (mỗi 22.5°),
+        trả ra góc trung tâm sector thắng cuộc.
+        """
+        if not xs_deg:
+            return None
+        counts = [0] * 16
+        for deg in xs_deg:
+            try:
+                d = float(deg) % 360.0
+            except Exception:
+                continue
+            idx = int((d / 22.5) + 0.5) % 16
+            counts[idx] += 1
+        best = max(range(16), key=lambda i: counts[i])
+        return best * 22.5
+
+    # -------------------------
+    # Daily
+    # -------------------------
     daily = raw.get("daily") or {}
     d_time = daily.get("time") or []
 
@@ -196,21 +260,57 @@ def _normalize_bundle(raw: dict) -> dict:
             return arr + [None] * (len(d_time) - len(arr))
         return arr[: len(d_time)]
 
+    # base daily (có thể tuỳ params)
     tmax = _d("temperature_2m_max")
     tmin = _d("temperature_2m_min")
     prsum = _d("precipitation_sum")
     ppmax = _d("precipitation_probability_max")
     wsmax = _d("wind_speed_10m_max")
+    wddom = _d("wind_direction_10m_dominant")
+
+    # daily mean humidity/cloud (nếu bạn request trong daily=...)
+    rh_mean_arr = _d("relative_humidity_2m_mean")
+    cc_mean_arr = _d("cloud_cover_mean")
+
+    # fallback from hourly if daily mean/max missing
+    rh_by_day = _hourly_group_by_date("humidity_percent")
+    cc_by_day = _hourly_group_by_date("cloud_percent")
+    ws_by_day = _hourly_group_by_date("wind_speed")
+    wd_by_day = _hourly_group_by_date("wind_direction_deg")
 
     daily_points = []
     for i in range(len(d_time)):
+        day = d_time[i]
+
+        rh_mean = rh_mean_arr[i]
+        cc_mean = cc_mean_arr[i]
+        ws_max = wsmax[i]
+        wd_dom = wddom[i]
+
+        if rh_mean is None:
+            rh_mean = _mean(rh_by_day.get(day, []))
+        if cc_mean is None:
+            cc_mean = _mean(cc_by_day.get(day, []))
+        if ws_max is None:
+            ws_max = _max(ws_by_day.get(day, []))
+        if wd_dom is None:
+            wd_dom = _dominant_wind_dir_deg(wd_by_day.get(day, []))
+
         daily_points.append({
-            "date": d_time[i],
+            "date": day,
+
             "tmax_c": tmax[i],
             "tmin_c": tmin[i],
+
+            "humidity_mean_percent": rh_mean,
+            "cloud_mean_percent": cc_mean,
+
+            "wind_speed_max_kmh": ws_max,
+            "wind_direction_dominant_deg": wd_dom,
+            "wind_direction_dominant_label": _deg_to_compass(wd_dom) if wd_dom is not None else None,
+
             "rain_sum_mm": prsum[i],
             "rain_prob_max_percent": ppmax[i],
-            "wind_speed_max": wsmax[i],
         })
 
     return {
@@ -559,8 +659,11 @@ def _open_meteo_fetch(
         "longitude": lon,
         "timezone": tz or "auto",
         "forecast_days": forecast_days,
-        "windspeed_unit": "kmh",
+
+        # ✅ theo docs hiện tại là wind_speed_unit (không phải windspeed_unit) :contentReference[oaicite:1]{index=1}
+        "wind_speed_unit": "kmh",
         "precipitation_unit": "mm",
+
         "current": ",".join([
             "temperature_2m",
             "apparent_temperature",
@@ -581,17 +684,29 @@ def _open_meteo_fetch(
             "wind_direction_10m",
         ]),
         "daily": ",".join([
+            # nhiệt độ
             "temperature_2m_max",
             "temperature_2m_min",
+
+            # mưa
             "precipitation_sum",
             "precipitation_probability_max",
+
+            # gió
             "wind_speed_10m_max",
+            "wind_direction_10m_dominant",  # có trong daily definition :contentReference[oaicite:2]{index=2}
+
+            # ✅ thêm độ ẩm / mây theo ngày (mean)
+            # Open-Meteo daily aggregation có dạng <hourly_var>_<agg> :contentReference[oaicite:3]{index=3}
+            "relative_humidity_2m_mean",
+            "cloud_cover_mean",
         ]),
     }
 
     resp = requests.get(OPEN_METEO_BASE, params=params, timeout=20)
     resp.raise_for_status()
     return resp.json()
+
 
 
 @api_view(["GET"])

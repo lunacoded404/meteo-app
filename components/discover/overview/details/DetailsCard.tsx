@@ -60,9 +60,15 @@ export default function DetailsCard({
     <div className="space-y-4">
       <div className="flex items-end justify-between">
         <div>
-          <div className="text-white text-[20px] font-semibold">Details</div>
+          <div className="text-white text-[20px] font-semibold">Chi tiết</div>
           <div className="text-white/65 text-[12px]">
-            Khu vực: {region.name} • {region.lat.toFixed(3)}, {region.lon.toFixed(3)} • {timeText}
+            Khu vực: {region.name}
+          </div>
+          <div className="text-white/65 text-[12px]">
+            Tọa độ địa lý: {region.lat.toFixed(3)}, {region.lon.toFixed(3)}
+          </div>
+          <div className="text-white/65 text-[12px]">
+            Cập nhật lúc: {timeText}
           </div>
         </div>
       </div>

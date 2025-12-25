@@ -10,66 +10,71 @@ import SplitText from "./SplitText";
 const Header: React.FC = () => {
   const items: CardNavItem[] = [
      {
-    label: "Discover",
+    label: "KHÁM PHÁ",
     bgColor: "#0D0716",
     textColor: "#ffffff",
     links: [
       {
-        label: "Overview",
+        label: "Tổng Quan",
         href: "/discover/overview",
         ariaLabel: "Go to Discover page",
       },
       {
-        label: "Forecast",
-        href: "/discover/forecast",
+        label: "Dự Báo Theo Giờ",
+        href: "/discover/hourly",
         ariaLabel: "Go to Discover page",
       },
       {
-        label: "Login",
+        label: "Dự Báo Theo Ngày",
+        href: "/discover/day",
+        ariaLabel: "Go to Discover page",
+      },
+      {
+        label: "Đăng Nhập",
         href: "/discover/login",
         ariaLabel: "Go to Discover page",
       },
     ],
   },
   {
-    label: "Weather",
+    label: "THỜI TIẾT",
     bgColor: "#170D27",
     textColor: "#ffffff",
     links: [
       {
-        label: "Temperature",
+        label: "Nhiệt Độ",
         href: "/weather/temperature",
         ariaLabel: "Go to Weather page",
       },
       {
-        label: "Humidity",
+        label: "Độ Ẩm",
         href: "/weather/humidity",
         ariaLabel: "Go to Weather page",
       },
       {
-        label: "Windy ",
+        label: "Gió",
         href: "/weather/windy",
         ariaLabel: "Go to Weather page",
       },
       {
-        label: "Cloud",
+        label: "Mây",
         href: "/weather/cloud",
         ariaLabel: "Go to Weather page",
       },
       {
-        label: "Rain",
+        label: "Mưa",
         href: "/weather/rain",
         ariaLabel: "Go to Weather page",
       },
     ],
   },
   {
-    label: "Map",
+    label: "BẢN ĐỒ",
     bgColor: "#271E37",
     textColor: "#ffffff",
     links: [
       {
-        label: "Map",
+        label: "Bản Đồ Thời Tiết",
         href: "/map",
         ariaLabel: "Go to Map page",
       },
