@@ -4,6 +4,13 @@ import React from "react";
 import PopupCard, { Stat } from "../PopupCard";
 import { fmt, windDirLabelVN } from "../helpers/popupUtils";
 
+export type WindRoseSector = {
+  dir_label: string; // ví dụ: "N", "NE", "E"...
+  count: number;     // tần suất
+  // có thể có thêm field nếu backend trả về
+  dir_deg?: number;
+};
+
 export type ProvinceWind = {
   province: { id: number; code: string; name: string };
   coord: { lat: number; lon: number };

@@ -3,7 +3,9 @@
 import React, { useMemo } from "react";
 import dynamic from "next/dynamic";
 import { X } from "lucide-react";
-import type { ProvinceWind, WindRoseSector } from "./WindPopup";
+import type { ProvinceWind } from "./popups/WindPopup";
+import type { WindRoseSector } from "./popups/WindPopup";
+
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false }) as any;
 
