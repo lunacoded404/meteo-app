@@ -3,10 +3,13 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
   const sp = useSearchParams();
+
+  const nextUrl = useMemo(() => sp.get("next") ?? "/discover/overview", [sp]);
 
   const [message, setMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
