@@ -15,7 +15,7 @@ export default function TrendsSection() {
       loading={loading}
       err={err}
       setMetric={setMetric}
-      setPeriod={setPeriod}
+      setPeriod={setPeriod}         // ✅ truyền đúng
       setMonthFilter={setMonthFilter}
     />
   );

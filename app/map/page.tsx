@@ -2,7 +2,7 @@
 import dynamic from "next/dynamic";
 
 
-const MapClient = dynamic(() => import("@/components/MapClient"), {
+const MapClient = dynamic(() => import("@/components/map/MapClient"), {
   ssr: false,
   loading: () => (
     <div className="h-[100vh] w-full flex items-center justify-center bg-slate-900">

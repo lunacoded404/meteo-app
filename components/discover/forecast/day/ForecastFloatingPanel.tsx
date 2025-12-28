@@ -1,12 +1,21 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Thermometer, Droplets, Wind, Cloud, Umbrella, ArrowUp, RefreshCw } from "lucide-react";
 
 type NavItem = { id: string; label: string; icon: React.ReactNode };
 
 export function cx(...cls: Array<string | false | null | undefined>) {
   return cls.filter(Boolean).join(" ");
+}
+
+// ✅ scroll chính xác: top = elementTop - offsetPx (để không bị sticky bar che)
+function scrollToId(id: string, offsetPx: number) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const top = el.getBoundingClientRect().top + window.scrollY - offsetPx;
+  window.scrollTo({ top, behavior: "smooth" });
 }
 
 export default function ForecastFloatingPanel({
@@ -40,28 +49,88 @@ export default function ForecastFloatingPanel({
 
   const [active, setActive] = useState(defaultActiveId);
 
+  // ✅ chặn IO giật active/hash trong lúc click-scroll
+  const clickScrollingRef = useRef(false);
+
+// ✅ vào trang: set active + scroll tới section đầu tiên, KHÓA IO lúc đầu để khỏi nhảy
+useEffect(() => {
+  const hash = (window.location.hash || "").replace("#", "");
+  const startId = navItems.some((x) => x.id === hash) ? hash : defaultActiveId;
+
+  setActive(startId);
+
+  // ✅ khóa IO lúc init (vì chart/section render trễ)
+  clickScrollingRef.current = true;
+
+  let cancelled = false;
+
+  const tryScroll = (attempt = 0) => {
+    if (cancelled) return;
+
+    const el = document.getElementById(startId);
+    if (el) {
+      // sync hash (không tạo history mới khi init)
+      if (window.location.hash !== `#${startId}`) {
+        window.history.replaceState(null, "", `#${startId}`);
+      }
+
+      scrollToId(startId, activeOffsetPx);
+
+      window.setTimeout(() => {
+        if (!cancelled) clickScrollingRef.current = false;
+      }, 700);
+      return;
+    }
+
+    // ✅ retry tối đa ~30 frame (0.5s) để chờ Daily7Charts render id
+    if (attempt < 30) {
+      requestAnimationFrame(() => tryScroll(attempt + 1));
+    } else {
+      clickScrollingRef.current = false; // tránh bị khóa vĩnh viễn
+    }
+  };
+
+  // bắt đầu retry
+  requestAnimationFrame(() => tryScroll(0));
+
+  return () => {
+    cancelled = true;
+    clickScrollingRef.current = false;
+  };
+}, [navItems, activeOffsetPx, defaultActiveId]);
+
+
+  // ✅ Active theo section visible khi scroll
   useEffect(() => {
     const ids = navItems.map((x) => x.id);
+    const els = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    if (!els.length) return;
 
     const obs = new IntersectionObserver(
       (entries) => {
+        if (clickScrollingRef.current) return;
+
         const visible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0];
-        if (visible?.target?.id) setActive(visible.target.id);
+
+        const id = visible?.target?.id;
+        if (!id) return;
+
+        setActive(id);
+        if (window.location.hash !== `#${id}`) {
+          window.history.replaceState(null, "", `#${id}`);
+        }
       },
       {
         root: null,
+        // ✅ trừ đúng phần sticky top bar
         rootMargin: `-${activeOffsetPx}px 0px -60% 0px`,
-        threshold: [0.08, 0.15, 0.25],
+        threshold: [0.08, 0.15, 0.25, 0.35],
       }
     );
 
-    ids.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) obs.observe(el);
-    });
-
+    els.forEach((el) => obs.observe(el));
     return () => obs.disconnect();
   }, [navItems, activeOffsetPx]);
 
@@ -69,9 +138,20 @@ export default function ForecastFloatingPanel({
     e.preventDefault();
     const el = document.getElementById(id);
     if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-    history.replaceState(null, "", `#${id}`);
+
     setActive(id);
+
+    // ✅ tạo history để share link
+    if (window.location.hash !== `#${id}`) {
+      window.history.pushState(null, "", `#${id}`);
+    }
+
+    clickScrollingRef.current = true;
+    scrollToId(id, activeOffsetPx);
+
+    window.setTimeout(() => {
+      clickScrollingRef.current = false;
+    }, 600);
   };
 
   const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -81,8 +161,7 @@ export default function ForecastFloatingPanel({
     window.location.reload();
   };
 
-    const maxHeight = `min(60vh, calc(100vh - ${topOffsetPx + 24}px))`;
-
+  const maxHeight = `min(60vh, calc(100vh - ${topOffsetPx + 24}px))`;
 
   return (
     <div className={cx("hidden lg:block fixed left-5 z-[70]", className)} style={{ top: topOffsetPx }}>
@@ -95,9 +174,7 @@ export default function ForecastFloatingPanel({
         )}
         style={{ maxHeight }}
       >
-        {/* ✅ flex-col để list scroll riêng, footer luôn nằm dưới */}
         <div className="p-3 flex flex-col gap-2 h-full">
-          {/* ✅ LIST: scroll khi panel cao quá */}
           <div className="flex flex-col gap-2 overflow-auto pr-1">
             {navItems.map((it) => {
               const isActive = it.id === active;
@@ -125,7 +202,12 @@ export default function ForecastFloatingPanel({
                     {it.icon}
                   </span>
 
-                  <span className={cx("text-[13px] font-medium tracking-tight", isActive ? "text-slate-900" : "text-slate-100")}>
+                  <span
+                    className={cx(
+                      "text-[13px] font-medium tracking-tight",
+                      isActive ? "text-slate-900" : "text-slate-100"
+                    )}
+                  >
                     {it.label}
                   </span>
                 </a>
@@ -133,7 +215,6 @@ export default function ForecastFloatingPanel({
             })}
           </div>
 
-          {/* ✅ FOOTER luôn ở đáy */}
           <div className="mt-1 border-t border-white/10 pt-2 flex items-center justify-between px-1">
             <button
               type="button"

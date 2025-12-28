@@ -1,12 +1,12 @@
+// src/components/discover/overview/CurrentSection.tsx
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 import type { ProvinceIndexItem } from "@/components/discover/overview/RegionSearch";
 
 import CurrentSectionView from "./current/CurrentSectionView";
 import { useCurrentWeather } from "./current/useCurrentWeather";
-import { loadLastRegion } from "./current/regionBus";
-import { publishRegionFromItem } from "./current/regionBus";
+import { useRegionBusSelection } from "./current/regionBus";
 
 const DEFAULT_HCM: ProvinceIndexItem = {
   code: "79",
@@ -19,34 +19,22 @@ export default function CurrentSection({
 }: {
   apiBase?: string;
 }) {
-  const [selectedRegion, setSelectedRegion] = useState<ProvinceIndexItem>(DEFAULT_HCM);
-
-  useEffect(() => {
-    const last = loadLastRegion();
-    if (!last) return;
-
-    setSelectedRegion({
-      code: last.code,
-      name: last.name,
-      centroid: { lat: last.lat, lon: last.lon },
-    });
-  }, []);
+  // ✅ Lấy tỉnh/thành đang được chọn từ thanh tìm kiếm (publish qua regionBus)
+  const selectedRegion = useRegionBusSelection(DEFAULT_HCM);
 
   const { data, loading, err } = useCurrentWeather({
     apiBase,
     regionCode: selectedRegion?.code,
   });
 
-  const onChangeRegion = useCallback((it: ProvinceIndexItem) => {
-    setSelectedRegion(it);
-    publishRegionFromItem(it);
-  }, []);
-
+  // ✅ onChangeRegion / items / loadingList vẫn truyền để khỏi vỡ props
+  // (UI search trong CurrentSectionView bạn đang ẩn rồi)
   return (
     <CurrentSectionView
-      apiBase={apiBase}
       selectedRegion={selectedRegion}
-      onChangeRegion={onChangeRegion}
+      onChangeRegion={() => {}}
+      items={[selectedRegion]}
+      loadingList={false}
       data={data}
       loading={loading}
       err={err}

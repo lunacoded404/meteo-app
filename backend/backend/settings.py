@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles', 
     'rest_framework',
     "corsheaders",
+    "rest_framework_simplejwt",
     'api',
 ]
 
@@ -56,6 +57,11 @@ MIDDLEWARE = [
 CORS_ALLOW_ALL_ORIGINS = True
 
 
+REST_FRAMEWORK = {
+  "DEFAULT_AUTHENTICATION_CLASSES": (
+    "rest_framework_simplejwt.authentication.JWTAuthentication",
+  )
+}
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -86,8 +92,8 @@ DATABASES = {
         "HOST": "aws-1-ap-southeast-1.pooler.supabase.com",   
         "PORT": 6543,                  
         "NAME": "postgres",           
-        "USER": "postgres.vnebnwltauywjpoxfela",
-        "PASSWORD": "meteoapp25...",
+        "USER": "postgres.wxqtyismawdnnmmrtwfa",
+        "PASSWORD": "weatherapp123...",
         "OPTIONS": {
             "sslmode": "require",
         },

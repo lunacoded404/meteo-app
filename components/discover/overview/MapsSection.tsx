@@ -4,7 +4,7 @@ import React from "react";
 import dynamic from "next/dynamic";
 
 // ✅ IMPORTANT: không SSR MapClient
-const MapClient = dynamic(() => import("@/components/MapClient"), {
+const MapClient = dynamic(() => import("@/components/map/MapClient"), {
   ssr: false,
   loading: () => (
     <div className="h-full w-full grid place-items-center text-white/75 text-[13px]">

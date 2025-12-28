@@ -3,15 +3,16 @@
 import React, { useMemo } from "react";
 import { MapPin, Wind, Droplets, Cloud, Umbrella, AlertTriangle } from "lucide-react";
 
-import RegionSearch, {ProvinceIndexItem} from "@/components/discover/overview/RegionSearch";
+
+import type { ProvinceIndexItem } from "@/components/discover/overview/RegionSearch";
+
 import type { CurrentWeather } from "./current.types";
 import { cx } from "./current.utils";
 import { fmtTimeVN } from "../details/details.utils";
 import CurrentCard from "./CurrentCard";
 
 export function StatusPill({ loading, err }: { loading: boolean; err: string | null }) {
-  const base =
-    "inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[11px] border backdrop-blur";
+  const base = "inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[11px] border backdrop-blur";
   if (err) {
     return (
       <span className={cx(base, "bg-rose-500/10 border-rose-400/20 text-rose-100")}>
@@ -78,16 +79,21 @@ function StatCard({
 }
 
 export default function CurrentSectionView({
-  apiBase,
   selectedRegion,
   onChangeRegion,
+  items,
+  loadingList,
   data,
   loading,
   err,
 }: {
-  apiBase: string;
   selectedRegion: ProvinceIndexItem;
   onChangeRegion: (it: ProvinceIndexItem) => void;
+
+  // ✅ vẫn nhận để khỏi sửa code cha (CurrentSection.tsx)
+  items: ProvinceIndexItem[];
+  loadingList: boolean;
+
   data: CurrentWeather | null;
   loading: boolean;
   err: string | null;
@@ -127,22 +133,35 @@ export default function CurrentSectionView({
           <div className="mt-1 text-[12px] text-white/70">{loading ? "Đang tải…" : updated}</div>
         </div>
 
-        {/* Right */}
+        {/* Right (desktop) */}
         <div className="hidden md:flex items-center gap-3">
+          {/* ✅ BỎ UI search bar — vẫn giữ import/props để không sửa chỗ gọi */}
+          {/* 
           <div className="w-[320px]">
-            <RegionSearch apiBase={apiBase} value={selectedRegion} onChange={onChangeRegion} />
-          </div>
+            <ProvinceSearchBar
+              items={items?.length ? items : [selectedRegion]}
+              placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
+              onSelect={onChangeRegion}
+            />
+          </div> 
+          */}
           <div className="text-[11px] text-white/55 whitespace-nowrap">Nguồn: Open-Meteo</div>
         </div>
       </div>
 
-      {/* Mobile search */}
+      {/* Mobile search (bỏ UI) */}
+      {/*
       <div className="mt-3 md:hidden">
-        <RegionSearch apiBase={apiBase} value={selectedRegion} onChange={onChangeRegion} />
+        <ProvinceSearchBar
+          items={items?.length ? items : [selectedRegion]}
+          placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
+          onSelect={onChangeRegion}
+        />
         <div className="mt-2 text-[11px] text-white/55">
           Gõ tên • ↑↓ chọn • Enter để chọn • Esc để đóng
         </div>
       </div>
+      */}
 
       {/* ✅ Hero card */}
       <CurrentCard data={data} loading={loading} err={err} />

@@ -1,10 +1,5 @@
 
 
-
-export default function Discover() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-        <h1>hihihi</h1>
-    </div>
-  );
+export default function DiscoverPage () {
+  return <h1>Hé lô bạn nha!!</h1>
 }

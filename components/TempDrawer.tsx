@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import dynamic from "next/dynamic";
 import { X } from "lucide-react";
-import type { ProvinceWeather } from "./TemperaturePopup";
+import type { ProvinceWeather } from "./popups/TemperaturePopup";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false }) as any;
 

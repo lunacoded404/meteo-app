@@ -1,6 +1,9 @@
 // src/components/discover/overview/trends/trends.types.tsx
 export type MetricKey = "temperature" | "precipitation" | "humidity" | "wind";
 
+// ✅ Period dropdown: 12m hoặc năm cụ thể (2025, 2024...)
+export type PeriodKey = "12m" | number;
+
 export type RegionDetail = {
   code: string;
   name: string;
@@ -41,8 +44,13 @@ export type DailySummaryRow = {
 
 export type TrendsVM = {
   region: RegionDetail;
-  rangeLabel: string;
+
+  // ✅ dropdown period + list years
+  period: PeriodKey;
+  years: number[]; // ví dụ [2025, 2024, 2023, 2022, 2021, 2020]
   monthFilter: number | "all";
+
+  rangeLabel: string;
   metric: MetricKey;
 
   daily: DailyPoint[];
@@ -53,6 +61,5 @@ export type TrendsVM = {
   summaryRows_12m: DailySummaryRow[];
   summaryRows_all: DailySummaryRow[];
 
-  // warning line
   warningText: string | null;
 };

@@ -1,17 +1,19 @@
+# api/views.py
+from __future__ import annotations
+
 from datetime import date, datetime, timedelta
-import json
-import math
 import requests
 
 from django.db import connection
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework.decorators import api_view
+from django.core.cache import cache
+from django.http import Http404
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import ForecastCache, Province
+
+from rest_framework.decorators import api_view
+from .models import ForecastCache  # ✅ KHÔNG import Province vì model đang lệch schema
 
 OPEN_METEO_BASE = "https://api.open-meteo.com/v1/forecast"
 
@@ -66,7 +68,7 @@ def _latest_hour_value(om: dict, field: str):
 def _deg_to_compass(deg: float | None) -> str | None:
     if deg is None:
         return None
-    dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
+    dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
     ix = int((deg % 360) / 22.5 + 0.5) % 16
     return dirs[ix]
 
@@ -78,37 +80,32 @@ def _build_cache_key(lat: float, lon: float, forecast_days: int, tz: str | None)
 
 def _get_province_coord(code: str):
     """
-    Lấy (province, lat, lon) theo thứ tự:
-    1) Province.lat/lon (ORM)
-    2) fallback provinces.centroid_lat/centroid_lon (SQL)
+    Lấy (province_dict, lat, lon) từ bảng provinces (Supabase) bằng centroid_lat/lon.
+    provinces columns: id, code, name, centroid_lat, centroid_lon
     """
-    province = get_object_or_404(Province, code=code)
+    with connection.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, code, name, centroid_lat, centroid_lon
+            FROM provinces
+            WHERE code = %s
+            LIMIT 1
+            """,
+            [code],
+        )
+        row = cur.fetchone()
 
-    lat = getattr(province, "lat", None)
+    if not row:
+        raise Http404(f"Province with code={code} not found")
 
-    # nhiều project đặt lon là "lon" hoặc "long"
-    lon = getattr(province, "lon", None)
-    if lon is None:
-        lon = getattr(province, "long", None)
+    id_, code_db, name, lat, lon = row
+
+    province = {"id": int(id_), "code": str(code_db), "name": str(name)}
 
     if lat is None or lon is None:
-        with connection.cursor() as cur:
-            cur.execute(
-                """
-                SELECT centroid_lat, centroid_lon
-                FROM provinces
-                WHERE code = %s
-                LIMIT 1
-                """,
-                [code],
-            )
-            row = cur.fetchone()
-        if row:
-            lat2, lon2 = row
-            lat = lat if lat is not None else lat2
-            lon = lon if lon is not None else lon2
+        return province, None, None
 
-    return province, lat, lon
+    return province, float(lat), float(lon)
 
 
 def _normalize_bundle(raw: dict) -> dict:
@@ -120,7 +117,7 @@ def _normalize_bundle(raw: dict) -> dict:
       "location": {...},
       "current": {...},
       "hourly": [ ... ],
-      "daily": [ ... ],   # daily points (forecast_days) with temp/humidity/wind/cloud/rain
+      "daily": [ ... ],
       "meta": {...}
     }
     """
@@ -128,8 +125,6 @@ def _normalize_bundle(raw: dict) -> dict:
     lat = raw.get("latitude")
     lon = raw.get("longitude")
 
-    # Open-Meteo có thể trả "current" (khi dùng params current=...)
-    # hoặc "current_weather" (khi dùng current_weather=true)
     current = (raw.get("current") or raw.get("current_weather") or {}).copy()
 
     def _fill_current_if_missing(cur_key: str, hourly_key: str):
@@ -140,7 +135,6 @@ def _normalize_bundle(raw: dict) -> dict:
             current[cur_key] = v
             current["time"] = current.get("time") or t
 
-    # current fallback từ hourly (nếu thiếu)
     _fill_current_if_missing("temperature_2m", "temperature_2m")
     _fill_current_if_missing("apparent_temperature", "apparent_temperature")
     _fill_current_if_missing("relative_humidity_2m", "relative_humidity_2m")
@@ -150,10 +144,8 @@ def _normalize_bundle(raw: dict) -> dict:
     _fill_current_if_missing("wind_speed_10m", "wind_speed_10m")
     _fill_current_if_missing("wind_direction_10m", "wind_direction_10m")
 
-    # current schema cho frontend
     cur = {
         "time": current.get("time"),
-        # current_weather (legacy) dùng key "temperature" và "windspeed"/"winddirection"
         "temperature_c": current.get("temperature_2m", current.get("temperature")),
         "feels_like_c": current.get("apparent_temperature"),
         "humidity_percent": current.get("relative_humidity_2m"),
@@ -193,20 +185,21 @@ def _normalize_bundle(raw: dict) -> dict:
     hourly_points = []
     for i in range(len(h_time)):
         wd_label = _deg_to_compass(wd[i]) if wd[i] is not None else None
-        hourly_points.append({
-            "time": h_time[i],
-            "temperature_c": t[i],
-            "feels_like_c": at[i],
-            "humidity_percent": rh[i],
-            "rain_mm": pr[i],
-            "rain_prob_percent": pp[i],
-            "cloud_percent": cc[i],
-            "wind_speed": ws[i],
-            "wind_direction_deg": wd[i],
-            "wind_direction_label": wd_label,
-        })
+        hourly_points.append(
+            {
+                "time": h_time[i],
+                "temperature_c": t[i],
+                "feels_like_c": at[i],
+                "humidity_percent": rh[i],
+                "rain_mm": pr[i],
+                "rain_prob_percent": pp[i],
+                "cloud_percent": cc[i],
+                "wind_speed": ws[i],
+                "wind_direction_deg": wd[i],
+                "wind_direction_label": wd_label,
+            }
+        )
 
-    # helper: group hourly values by day (YYYY-MM-DD)
     def _hourly_group_by_date(field: str) -> dict[str, list[float]]:
         buckets: dict[str, list[float]] = {}
         for p in hourly_points:
@@ -229,10 +222,6 @@ def _normalize_bundle(raw: dict) -> dict:
         return max(xs) if xs else None
 
     def _dominant_wind_dir_deg(xs_deg: list[float]) -> float | None:
-        """
-        Lấy hướng gió 'dominant' kiểu histogram 16 hướng (mỗi 22.5°),
-        trả ra góc trung tâm sector thắng cuộc.
-        """
         if not xs_deg:
             return None
         counts = [0] * 16
@@ -260,7 +249,6 @@ def _normalize_bundle(raw: dict) -> dict:
             return arr + [None] * (len(d_time) - len(arr))
         return arr[: len(d_time)]
 
-    # base daily (có thể tuỳ params)
     tmax = _d("temperature_2m_max")
     tmin = _d("temperature_2m_min")
     prsum = _d("precipitation_sum")
@@ -268,11 +256,9 @@ def _normalize_bundle(raw: dict) -> dict:
     wsmax = _d("wind_speed_10m_max")
     wddom = _d("wind_direction_10m_dominant")
 
-    # daily mean humidity/cloud (nếu bạn request trong daily=...)
     rh_mean_arr = _d("relative_humidity_2m_mean")
     cc_mean_arr = _d("cloud_cover_mean")
 
-    # fallback from hourly if daily mean/max missing
     rh_by_day = _hourly_group_by_date("humidity_percent")
     cc_by_day = _hourly_group_by_date("cloud_percent")
     ws_by_day = _hourly_group_by_date("wind_speed")
@@ -296,84 +282,100 @@ def _normalize_bundle(raw: dict) -> dict:
         if wd_dom is None:
             wd_dom = _dominant_wind_dir_deg(wd_by_day.get(day, []))
 
-        daily_points.append({
-            "date": day,
-
-            "tmax_c": tmax[i],
-            "tmin_c": tmin[i],
-
-            "humidity_mean_percent": rh_mean,
-            "cloud_mean_percent": cc_mean,
-
-            "wind_speed_max_kmh": ws_max,
-            "wind_direction_dominant_deg": wd_dom,
-            "wind_direction_dominant_label": _deg_to_compass(wd_dom) if wd_dom is not None else None,
-
-            "rain_sum_mm": prsum[i],
-            "rain_prob_max_percent": ppmax[i],
-        })
+        daily_points.append(
+            {
+                "date": day,
+                "tmax_c": tmax[i],
+                "tmin_c": tmin[i],
+                "humidity_mean_percent": rh_mean,
+                "cloud_mean_percent": cc_mean,
+                "wind_speed_max_kmh": ws_max,
+                "wind_direction_dominant_deg": wd_dom,
+                "wind_direction_dominant_label": _deg_to_compass(wd_dom) if wd_dom is not None else None,
+                "rain_sum_mm": prsum[i],
+                "rain_prob_max_percent": ppmax[i],
+            }
+        )
 
     return {
         "location": {"lat": lat, "lon": lon, "timezone": tz_name},
         "current": cur,
         "hourly": hourly_points,
         "daily": daily_points,
-        "meta": {
-            "source": "open-meteo",
-            "generated_at": timezone.now().isoformat(),
-        },
+        "meta": {"source": "open-meteo", "generated_at": timezone.now().isoformat()},
     }
 
 
-# =========================
-# 1) Provinces GeoJSON (CHO RegionSearch)
-# =========================
-def provinces_geojson(request):
-    """
-    Trả GeoJSON provinces + centroid_lat/centroid_lon để RegionSearch dùng.
-    """
-    with connection.cursor() as cur:
-        cur.execute(
-            """
-            SELECT id, code, name, ST_AsGeoJSON(geom), centroid_lat, centroid_lon
-            FROM provinces
-            WHERE geom IS NOT NULL;
-            """
-        )
-        rows = cur.fetchall()
+def _open_meteo_fetch(lat: float, lon: float, forecast_days: int = 10, tz: str | None = None) -> dict:
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "timezone": tz or "auto",
+        "forecast_days": forecast_days,
+        "wind_speed_unit": "kmh",
+        "precipitation_unit": "mm",
+        "current": ",".join(
+            [
+                "temperature_2m",
+                "apparent_temperature",
+                "relative_humidity_2m",
+                "precipitation",
+                "cloud_cover",
+                "wind_speed_10m",
+                "wind_direction_10m",
+            ]
+        ),
+        "hourly": ",".join(
+            [
+                "temperature_2m",
+                "apparent_temperature",
+                "relative_humidity_2m",
+                "precipitation",
+                "precipitation_probability",
+                "cloud_cover",
+                "wind_speed_10m",
+                "wind_direction_10m",
+            ]
+        ),
+        "daily": ",".join(
+            [
+                "temperature_2m_max",
+                "temperature_2m_min",
+                "precipitation_sum",
+                "precipitation_probability_max",
+                "wind_speed_10m_max",
+                "wind_direction_10m_dominant",
+                "relative_humidity_2m_mean",
+                "cloud_cover_mean",
+            ]
+        ),
+    }
 
-    features = []
-    for (id_, code, name, geom_json, centroid_lat, centroid_lon) in rows:
-        features.append({
-            "type": "Feature",
-            "geometry": json.loads(geom_json) if geom_json else None,
-            "properties": {
-                "id": id_,
-                "code": code,
-                "name": name,
-                "centroid_lat": centroid_lat,
-                "centroid_lon": centroid_lon,
-            },
-        })
-
-    return JsonResponse({"type": "FeatureCollection", "features": features}, safe=False)
+    resp = requests.get(OPEN_METEO_BASE, params=params, timeout=20)
+    resp.raise_for_status()
+    return resp.json()
 
 
 # =========================
-# 2) Temperature (current + 7 days)
+# Endpoints
 # =========================
+
 @api_view(["GET"])
 def province_weather(request, code: str):
     province, lat, lon = _get_province_coord(code)
     if lat is None or lon is None:
-        return Response({"detail": "Missing lat/lon (need centroid_lat/centroid_lon)"}, status=400)
+        return Response({"detail": "Missing centroid_lat/centroid_lon"}, status=400)
 
-    om = _om_get(float(lat), float(lon), {
-        "current_weather": True,
-        "daily": "temperature_2m_max,temperature_2m_min",
-        "past_days": 7,
-        "forecast_days": 7,
-    })
+    om = _om_get(
+        lat,
+        lon,
+        {
+            "current_weather": True,
+            "daily": "temperature_2m_max,temperature_2m_min",
+            "past_days": 7,
+            "forecast_days": 7,
+        },
+    )
 
     current = om.get("current_weather", {})
     daily = om.get("daily", {})
@@ -382,42 +384,38 @@ def province_weather(request, code: str):
     past, future = [], []
 
     for i, t in enumerate(daily.get("time", [])):
-        item = {
-            "time": t,
-            "tmax": daily["temperature_2m_max"][i],
-            "tmin": daily["temperature_2m_min"][i],
-        }
+        item = {"time": t, "tmax": daily["temperature_2m_max"][i], "tmin": daily["temperature_2m_min"][i]}
         (past if t < today else future).append(item)
 
-    return Response({
-        "province": {"id": province.id, "code": code, "name": province.name},
-        "coord": {"lat": float(lat), "lon": float(lon)},
-        "current": {
-            "temperature": current.get("temperature"),
-            "time": current.get("time"),
-        },
-        "daily_past_7": past[-7:],
-        "daily_future_7": future[:7],
-    })
+    return Response(
+        {
+            "province": province,
+            "coord": {"lat": lat, "lon": lon},
+            "current": {"temperature": current.get("temperature"), "time": current.get("time")},
+            "daily_past_7": past[-7:],
+            "daily_future_7": future[:7],
+        }
+    )
 
 
-# =========================
-# 3) Rain (current + 7 days daily)
-# =========================
 @api_view(["GET"])
 def province_rain(request, code: str):
     province, lat, lon = _get_province_coord(code)
     if lat is None or lon is None:
-        return Response({"detail": "Missing lat/lon (need centroid_lat/centroid_lon)"}, status=400)
+        return Response({"detail": "Missing centroid_lat/centroid_lon"}, status=400)
 
-    om = _om_get(float(lat), float(lon), {
-        "current": "precipitation,precipitation_probability",
-        "hourly": "precipitation,precipitation_probability",
-        "daily": "precipitation_sum,precipitation_probability_max",
-        "forecast_days": 7,
-        "past_days": 1,
-        "precipitation_unit": "mm",
-    })
+    om = _om_get(
+        lat,
+        lon,
+        {
+            "current": "precipitation,precipitation_probability",
+            "hourly": "precipitation,precipitation_probability",
+            "daily": "precipitation_sum,precipitation_probability_max",
+            "forecast_days": 7,
+            "past_days": 1,
+            "precipitation_unit": "mm",
+        },
+    )
 
     cur = om.get("current", {}) or {}
     t = cur.get("time")
@@ -427,7 +425,6 @@ def province_rain(request, code: str):
     if precip is None:
         t2, precip = _latest_hour_value(om, "precipitation")
         t = t or t2
-
     if prob is None:
         t3, prob = _latest_hour_value(om, "precipitation_probability")
         t = t or t3
@@ -440,40 +437,41 @@ def province_rain(request, code: str):
     n = min(len(d_times), 7)
     points = []
     for i in range(n):
-        points.append({
-            "date": d_times[i],
-            "precipitation_sum_mm": d_sum[i] if i < len(d_sum) else None,
-            "precipitation_probability_max": d_pmax[i] if i < len(d_pmax) else None,
-        })
+        points.append(
+            {
+                "date": d_times[i],
+                "precipitation_sum_mm": d_sum[i] if i < len(d_sum) else None,
+                "precipitation_probability_max": d_pmax[i] if i < len(d_pmax) else None,
+            }
+        )
 
-    return Response({
-        "province": {"id": province.id, "code": code, "name": province.name},
-        "coord": {"lat": float(lat), "lon": float(lon)},
-        "timezone": om.get("timezone"),
-        "current": {
-            "precipitation_mm": precip,
-            "precipitation_probability": prob,
-            "time": t,
-        },
-        "daily": {"points": points},
-    })
+    return Response(
+        {
+            "province": province,
+            "coord": {"lat": lat, "lon": lon},
+            "timezone": om.get("timezone"),
+            "current": {"precipitation_mm": precip, "precipitation_probability": prob, "time": t},
+            "daily": {"points": points},
+        }
+    )
 
 
-# =========================
-# 4) Wind (current + wind rose 24h)
-# =========================
 @api_view(["GET"])
 def province_wind(request, code: str):
     province, lat, lon = _get_province_coord(code)
     if lat is None or lon is None:
-        return Response({"detail": "Missing lat/lon (need centroid_lat/centroid_lon)"}, status=400)
+        return Response({"detail": "Missing centroid_lat/centroid_lon"}, status=400)
 
-    om = _om_get(float(lat), float(lon), {
-        "hourly": "wind_speed_10m,wind_direction_10m",
-        "past_days": 1,
-        "forecast_days": 0,
-        "windspeed_unit": "ms",
-    })
+    om = _om_get(
+        lat,
+        lon,
+        {
+            "hourly": "wind_speed_10m,wind_direction_10m",
+            "past_days": 1,
+            "forecast_days": 0,
+            "windspeed_unit": "ms",  # giữ như bạn đang dùng
+        },
+    )
 
     hourly = om.get("hourly", {}) or {}
     times = hourly.get("time", []) or []
@@ -502,61 +500,63 @@ def province_wind(request, code: str):
 
     rose = [{"dir_label": labels[i], "angle_deg": i * 22.5, "count": counts[i]} for i in range(16)]
 
-    return Response({
-        "province": {"id": province.id, "code": code, "name": province.name},
-        "coord": {"lat": float(lat), "lon": float(lon)},
-        "current": {
-            "wind_speed_kmh": speed_kmh,
-            "wind_direction_deg": direction_deg,
-            "time": time_str,
-        },
-        "rose_period_hours": 24,
-        "rose": rose,
-    })
+    return Response(
+        {
+            "province": province,
+            "coord": {"lat": lat, "lon": lon},
+            "current": {"wind_speed_kmh": speed_kmh, "wind_direction_deg": direction_deg, "time": time_str},
+            "rose_period_hours": 24,
+            "rose": rose,
+        }
+    )
 
 
-# =========================
-# 5) Humidity (current)
-# =========================
 @api_view(["GET"])
 def province_humidity(request, code: str):
     province, lat, lon = _get_province_coord(code)
     if lat is None or lon is None:
-        return Response({"detail": "Missing lat/lon (need centroid_lat/centroid_lon)"}, status=400)
+        return Response({"detail": "Missing centroid_lat/centroid_lon"}, status=400)
 
-    om = _om_get(float(lat), float(lon), {
-        "current": "relative_humidity_2m",
-        "hourly": "relative_humidity_2m",
-        "past_days": 1,
-        "forecast_days": 1,
-    })
+    om = _om_get(
+        lat,
+        lon,
+        {
+            "current": "relative_humidity_2m",
+            "hourly": "relative_humidity_2m",
+            "past_days": 1,
+            "forecast_days": 1,
+        },
+    )
 
     cur = om.get("current") or {}
     t = cur.get("time")
     v = cur.get("relative_humidity_2m")
 
-    return Response({
-        "province": {"id": province.id, "code": code, "name": province.name},
-        "coord": {"lat": float(lat), "lon": float(lon)},
-        "current": {"time": t, "humidity_percent": v},
-    })
+    return Response(
+        {
+            "province": province,
+            "coord": {"lat": lat, "lon": lon},
+            "current": {"time": t, "humidity_percent": v},
+        }
+    )
 
 
-# =========================
-# 6) Cloud (current + hourly fallback)
-# =========================
 @api_view(["GET"])
 def province_cloud(request, code: str):
     province, lat, lon = _get_province_coord(code)
     if lat is None or lon is None:
-        return Response({"detail": "Missing lat/lon (need centroid_lat/centroid_lon)"}, status=400)
+        return Response({"detail": "Missing centroid_lat/centroid_lon"}, status=400)
 
-    om = _om_get(float(lat), float(lon), {
-        "current": "cloud_cover",
-        "hourly": "cloud_cover",
-        "past_days": 1,
-        "forecast_days": 1,
-    })
+    om = _om_get(
+        lat,
+        lon,
+        {
+            "current": "cloud_cover",
+            "hourly": "cloud_cover",
+            "past_days": 1,
+            "forecast_days": 1,
+        },
+    )
 
     cur = om.get("current", {}) or {}
     t = cur.get("time")
@@ -566,59 +566,41 @@ def province_cloud(request, code: str):
         t2, cloud = _latest_hour_value(om, "cloud_cover")
         t = t or t2
 
-    return Response({
-        "province": {"id": province.id, "code": code, "name": province.name},
-        "coord": {"lat": float(lat), "lon": float(lon)},
-        "timezone": om.get("timezone"),
-        "current": {
-            "time": t,
-            "cloud_cover_percent": cloud,
-        },
-    })
+    return Response(
+        {
+            "province": province,
+            "coord": {"lat": lat, "lon": lon},
+            "timezone": om.get("timezone"),
+            "current": {"time": t, "cloud_cover_percent": cloud, "visibility_m": None},
+        }
+    )
 
 
-# =========================
-# Current section (lấy theo code, dùng centroid_lat/lon)
-# =========================
 @api_view(["GET"])
 def province_current(request, code: str):
-    with connection.cursor() as cur:
-        cur.execute(
-            """
-            SELECT code, name, centroid_lat, centroid_lon
-            FROM provinces
-            WHERE code = %s
-            LIMIT 1
-            """,
-            [code],
-        )
-        row = cur.fetchone()
-
-    if not row:
-        return Response({"detail": f"Province with code={code} not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    code_db, name, lat, lon = row
-
+    province, lat, lon = _get_province_coord(code)
     if lat is None or lon is None:
-        return Response({"detail": f"Province {code_db} missing centroid_lat/centroid_lon"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": f"Province {code} missing centroid_lat/centroid_lon"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         resp = requests.get(
             OPEN_METEO_BASE,
             params={
-                "latitude": float(lat),
-                "longitude": float(lon),
+                "latitude": lat,
+                "longitude": lon,
                 "timezone": "auto",
                 "windspeed_unit": "kmh",
                 "precipitation_unit": "mm",
-                "current": ",".join([
-                    "temperature_2m",
-                    "relative_humidity_2m",
-                    "precipitation",
-                    "cloud_cover",
-                    "wind_speed_10m",
-                    "wind_direction_10m",
-                ]),
+                "current": ",".join(
+                    [
+                        "temperature_2m",
+                        "relative_humidity_2m",
+                        "precipitation",
+                        "cloud_cover",
+                        "wind_speed_10m",
+                        "wind_direction_10m",
+                    ]
+                ),
             },
             timeout=15,
         )
@@ -629,84 +611,25 @@ def province_current(request, code: str):
 
     curw = om.get("current") or {}
 
-    return Response({
-        "region": {"code": code_db, "name": name},
-        "time": curw.get("time"),
-        "temperature_c": curw.get("temperature_2m"),
-        "feels_like_c": None,
-        "wind_kmh": curw.get("wind_speed_10m"),
-        "wind_dir_deg": curw.get("wind_direction_10m"),
-        "humidity_percent": curw.get("relative_humidity_2m"),
-        "cloud_percent": curw.get("cloud_cover"),
-        "precipitation_mm": curw.get("precipitation"),
-        "meta": {
-            "source": "open-meteo",
-            "timezone": om.get("timezone"),
-            "lat": float(lat),
-            "lon": float(lon),
-        },
-    })
-
-
-def _open_meteo_fetch(
-    lat: float,
-    lon: float,
-    forecast_days: int = 10,
-    tz: str | None = None
-) -> dict:
-    params = {
-        "latitude": lat,
-        "longitude": lon,
-        "timezone": tz or "auto",
-        "forecast_days": forecast_days,
-
-        # ✅ theo docs hiện tại là wind_speed_unit (không phải windspeed_unit) :contentReference[oaicite:1]{index=1}
-        "wind_speed_unit": "kmh",
-        "precipitation_unit": "mm",
-
-        "current": ",".join([
-            "temperature_2m",
-            "apparent_temperature",
-            "relative_humidity_2m",
-            "precipitation",
-            "cloud_cover",
-            "wind_speed_10m",
-            "wind_direction_10m",
-        ]),
-        "hourly": ",".join([
-            "temperature_2m",
-            "apparent_temperature",
-            "relative_humidity_2m",
-            "precipitation",
-            "precipitation_probability",
-            "cloud_cover",
-            "wind_speed_10m",
-            "wind_direction_10m",
-        ]),
-        "daily": ",".join([
-            # nhiệt độ
-            "temperature_2m_max",
-            "temperature_2m_min",
-
-            # mưa
-            "precipitation_sum",
-            "precipitation_probability_max",
-
-            # gió
-            "wind_speed_10m_max",
-            "wind_direction_10m_dominant",  # có trong daily definition :contentReference[oaicite:2]{index=2}
-
-            # ✅ thêm độ ẩm / mây theo ngày (mean)
-            # Open-Meteo daily aggregation có dạng <hourly_var>_<agg> :contentReference[oaicite:3]{index=3}
-            "relative_humidity_2m_mean",
-            "cloud_cover_mean",
-        ]),
-    }
-
-    resp = requests.get(OPEN_METEO_BASE, params=params, timeout=20)
-    resp.raise_for_status()
-    return resp.json()
-
+    return Response(
+        {
+            "region": {"code": province["code"], "name": province["name"]},
+            "time": curw.get("time"),
+            "temperature_c": curw.get("temperature_2m"),
+            "feels_like_c": None,
+            "wind_kmh": curw.get("wind_speed_10m"),
+            "wind_dir_deg": curw.get("wind_direction_10m"),
+            "humidity_percent": curw.get("relative_humidity_2m"),
+            "cloud_percent": curw.get("cloud_cover"),
+            "precipitation_mm": curw.get("precipitation"),
+            "meta": {
+                "source": "open-meteo",
+                "timezone": om.get("timezone"),
+                "lat": lat,
+                "lon": lon,
+            },
+        }
+    )
 
 
 @api_view(["GET"])
@@ -716,22 +639,15 @@ def province_bundle(request, code: str):
     """
     province, lat, lon = _get_province_coord(code)
     if lat is None or lon is None:
-        return Response(
-            {"detail": "Missing lat/lon (need centroid_lat/centroid_lon)"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return Response({"detail": "Missing centroid_lat/centroid_lon"}, status=status.HTTP_400_BAD_REQUEST)
 
     forecast_days = int(request.query_params.get("days", 10))
-    forecast_days = max(1, min(forecast_days, 16))  # Open-Meteo thường cho tới 16
+    forecast_days = max(1, min(forecast_days, 16))
 
-    # (Optional) timezone query param, mặc định auto
-    tz = request.query_params.get("tz")  # ví dụ "Asia/Ho_Chi_Minh" hoặc None
+    tz = request.query_params.get("tz")
 
-    # Nếu bạn có ForecastCache và muốn cache:
-    # - Vì bạn chưa đưa model ForecastCache nên mình làm "best-effort" an toàn:
-    cache_key = _build_cache_key(float(lat), float(lon), forecast_days, tz or "auto")
+    cache_key = _build_cache_key(lat, lon, forecast_days, tz or "auto")
 
-    # thử đọc cache (nếu model có các field phổ biến)
     try:
         fc = ForecastCache.objects.filter(key=cache_key).first()
         if fc:
@@ -742,19 +658,13 @@ def province_bundle(request, code: str):
     except Exception:
         fc = None
 
-    # gọi Open-Meteo
     try:
-        raw = _open_meteo_fetch(float(lat), float(lon), forecast_days=forecast_days, tz=tz)
+        raw = _open_meteo_fetch(lat, lon, forecast_days=forecast_days, tz=tz)
         payload = _normalize_bundle(raw)
-        # gắn region cho frontend khỏi phải đoán
-        payload["region"] = {"code": province.code, "name": province.name}
+        payload["region"] = {"code": province["code"], "name": province["name"]}
     except Exception as e:
-        return Response(
-            {"detail": f"Open-Meteo error: {str(e)}"},
-            status=status.HTTP_502_BAD_GATEWAY,
-        )
+        return Response({"detail": f"Open-Meteo error: {str(e)}"}, status=status.HTTP_502_BAD_GATEWAY)
 
-    # lưu cache (nếu model hợp)
     try:
         if fc is None:
             fc = ForecastCache(key=cache_key)
@@ -762,12 +672,73 @@ def province_bundle(request, code: str):
             fc.payload = payload
         elif hasattr(fc, "data"):
             fc.data = payload
-
         if hasattr(fc, "expires_at"):
             fc.expires_at = timezone.now() + timedelta(minutes=10)
-
         fc.save()
     except Exception:
         pass
 
     return Response(payload)
+
+
+@api_view(["GET"])
+def province_index(request):
+    """
+    Trả danh sách tỉnh/thành siêu nhẹ cho search bar:
+    {
+      items: [
+        { id, code, name, centroid: { lat, lon } }
+      ]
+    }
+    """
+    cache_key = "meteo:province_index:v2"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        resp = Response(cached)
+        resp["Cache-Control"] = "public, max-age=604800"
+        return resp
+
+    items = []
+    with connection.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, code, name, centroid_lat, centroid_lon
+            FROM provinces
+            WHERE code IS NOT NULL AND name IS NOT NULL
+            ORDER BY name ASC;
+            """
+        )
+        for id_, code, name, lat, lon in cur.fetchall():
+            if lat is None or lon is None:
+                continue
+            items.append(
+                {
+                    "id": int(id_),
+                    "code": str(code),
+                    "name": str(name),
+                    "centroid": {"lat": float(lat), "lon": float(lon)},
+                }
+            )
+
+    payload = {"items": items}
+    cache.set(cache_key, payload, 60 * 60 * 24 * 7)
+
+    resp = Response(payload)
+    resp["Cache-Control"] = "public, max-age=604800"
+    return resp
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
