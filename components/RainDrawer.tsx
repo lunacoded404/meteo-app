@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { X } from "lucide-react";
 import type { ProvinceRain, DailyRainPoint } from "./popups/RainPopup";
 
+
+{/* ffkjdfkdjfkdjf */}
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false }) as any;
 
 const formatDateLabel = (isoDate: string) => {
