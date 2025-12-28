@@ -1,66 +1,86 @@
-import { NextRequest, NextResponse } from "next/server";
+// import { NextResponse } from "next/server";
+// import type { NextRequest } from "next/server";
 
-const API_BASE = process.env.API_BASE_URL; // ví dụ: http://127.0.0.1:8000/api
+// const PUBLIC_PATHS = ["/home", "/discover/login", "/discover/signin", "/"];
 
-export const config = {
-  matcher: ["/api/:path*"],
-};
+// function isPublic(pathname: string) {
+//   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+// }
 
-export default async function proxy(req: NextRequest) {
+// export function middleware(req: NextRequest) {
+//   const { pathname, search } = req.nextUrl;
+
+//   // ✅ bỏ qua next internals / assets / api để login hoạt động
+//   if (
+//     pathname.startsWith("/_next") ||
+//     pathname.startsWith("/favicon") ||
+//     pathname === "/robots.txt" ||
+//     pathname.startsWith("/sitemap") ||
+//     pathname.startsWith("/api")
+//   ) {
+//     return NextResponse.next();
+//   }
+
+//   // ✅ public routes
+//   if (isPublic(pathname)) return NextResponse.next();
+
+//   // ✅ các trang còn lại: bắt buộc có access_token
+//   const access = req.cookies.get("access_token")?.value;
+
+//   if (!access) {
+//     const url = req.nextUrl.clone();
+//     url.pathname = "/discover/login";
+//     url.search = `?next=${encodeURIComponent(pathname + (search || ""))}`;
+//     return NextResponse.redirect(url);
+//   }
+
+//   return NextResponse.next();
+// }
+
+// export const config = {
+//   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+// };
+
+
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+const PUBLIC_PATHS = ["/home", "/discover/login", "/discover/signin", "/"];
+
+function isPublic(pathname: string) {
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
+export default function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
-  // ✅ Nếu bạn có route handler riêng cho login thì cho nó đi thẳng
-  // (proxy sẽ không rewrite nữa)
-  if (pathname === "/api/auth/login") {
+  // ✅ bỏ qua next internals / assets / api để login + api hoạt động
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    pathname === "/robots.txt" ||
+    pathname.startsWith("/sitemap") ||
+    pathname.startsWith("/api")
+  ) {
     return NextResponse.next();
   }
 
-  if (!API_BASE) {
-    console.error("[proxy] Missing API_BASE_URL");
-    return NextResponse.json(
-      { error: "Missing API_BASE_URL env" },
-      { status: 500 }
-    );
+  // ✅ public routes
+  if (isPublic(pathname)) return NextResponse.next();
+
+  // ✅ các trang còn lại: bắt buộc có access_token
+  const access = req.cookies.get("access_token")?.value;
+
+  if (!access) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/discover/login";
+    url.search = `?next=${encodeURIComponent(pathname + (search || ""))}`;
+    return NextResponse.redirect(url);
   }
 
-  // Map /api/... -> {API_BASE}/...
-  // Ví dụ: /api/provinces -> http://127.0.0.1:8000/api/provinces
-  const target =
-    API_BASE.replace(/\/$/, "") + pathname.replace(/^\/api/, "") + search;
-
-  try {
-    // GET/HEAD không có body
-    const body =
-      req.method === "GET" || req.method === "HEAD" ? undefined : await req.text();
-
-    const upstream = await fetch(target, {
-      method: req.method,
-      headers: {
-        // chỉ forward những header cần thiết để tránh lỗi lạ
-        "content-type": req.headers.get("content-type") ?? "application/json",
-        authorization: req.headers.get("authorization") ?? "",
-        cookie: req.headers.get("cookie") ?? "",
-      },
-      body,
-      redirect: "manual",
-    });
-
-    const text = await upstream.text();
-
-    const res = new NextResponse(text, { status: upstream.status });
-
-    const ct = upstream.headers.get("content-type");
-    if (ct) res.headers.set("content-type", ct);
-
-    const setCookie = upstream.headers.get("set-cookie");
-    if (setCookie) res.headers.set("set-cookie", setCookie);
-
-    return res;
-  } catch (e: any) {
-    console.error("[proxy] FETCH FAILED:", { target, message: e?.message, e });
-    return NextResponse.json(
-      { error: "Proxy fetch failed", target, detail: String(e?.message ?? e) },
-      { status: 502 }
-    );
-  }
+  return NextResponse.next();
 }
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};
