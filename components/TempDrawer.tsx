@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { X } from "lucide-react";
 import type { ProvinceWeather } from "./popups/TemperaturePopup";
@@ -15,9 +15,7 @@ const formatDateLabel = (iso: string) => {
   return `${dd}/${mm}`;
 };
 
-const makeChartOption = (
-  points: { date: string; tmin: number | null; tmax: number | null }[]
-) => ({
+const makeChartOption = (points: { date: string; tmin: number | null; tmax: number | null }[]) => ({
   grid: { left: 42, right: 18, top: 22, bottom: 55 },
   tooltip: {
     trigger: "axis",
@@ -45,7 +43,6 @@ const makeChartOption = (
     data: points.map((p) => p.date),
     axisLabel: { fontSize: 10 },
     axisTick: { alignWithLabel: true },
-    axisPointer: { type: "line" },
   },
   yAxis: {
     type: "value",
@@ -61,7 +58,7 @@ const makeChartOption = (
       data: points.map((p) => p.tmax),
       smooth: true,
       symbolSize: 6,
-      itemStyle: { color: "#ef4444" }, // ✅ đỏ
+      itemStyle: { color: "#ef4444" },
       lineStyle: { color: "#ef4444", width: 2 },
       label: { show: true, position: "top", fontSize: 9, color: "#ef4444" },
     },
@@ -71,7 +68,7 @@ const makeChartOption = (
       data: points.map((p) => p.tmin),
       smooth: true,
       symbolSize: 6,
-      itemStyle: { color: "#2563eb" }, // ✅ xanh dương
+      itemStyle: { color: "#2563eb" },
       lineStyle: { color: "#2563eb", width: 2 },
       label: { show: true, position: "top", fontSize: 9, color: "#2563eb" },
     },
@@ -87,8 +84,7 @@ export default function TempDrawer({
   onClose: () => void;
   data: ProvinceWeather | null;
 }) {
-  if (!open) return null;
-
+  // ✅ Hooks luôn chạy (không return sớm trước hooks)
   const provinceName = data?.province?.name ?? "Nhiệt độ";
 
   const futurePoints = useMemo(
@@ -111,57 +107,79 @@ export default function TempDrawer({
     }));
   }, [data]);
 
-  const futureOption = futurePoints.length === 7 ? makeChartOption(futurePoints) : null;
-  const pastOption = pastPoints.length === 7 ? makeChartOption(pastPoints) : null;
+  const futureOption = useMemo(() => (futurePoints.length === 7 ? makeChartOption(futurePoints) : null), [futurePoints]);
+  const pastOption = useMemo(() => (pastPoints.length === 7 ? makeChartOption(pastPoints) : null), [pastPoints]);
+
+  // ✅ lock scroll + ESC chỉ khi open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
+  // ✅ Sau khi hooks đã chạy hết, mới return null
+  if (!open) return null;
 
   return (
-    <div className="absolute left-4 bottom-4 z-[650] pointer-events-none">
-      <div className="pointer-events-auto w-[560px] max-w-[92vw] h-[74vh] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-[slideIn_200ms_ease-out]">
-        {/* header */}
-        <div className="grid grid-cols-[40px_1fr_40px] items-center border-b border-slate-200 px-4 py-3">
-          <div />
-          <div className="text-center">
-            <div className="text-base sm:text-lg font-extrabold text-black">{provinceName}</div>
-            <div className="text-xs text-slate-500">Dự báo ngắn hạn (7 ngày)</div>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-2 hover:bg-slate-100"
-            type="button"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5 text-black" />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-[4000]">
+      <button
+        type="button"
+        aria-label="Close overlay"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/35 backdrop-blur-[2px]"
+      />
 
-        {/* body (scroll) */}
-        <div className="p-3 sm:p-4 space-y-3 overflow-y-auto h-[calc(74vh-56px-44px)] text-black">
-          <div className="space-y-2">
-            <div className="font-bold text-sm text-black">Nhiệt độ 7 ngày tới</div>
-            {futureOption ? (
-              <ReactECharts option={futureOption} style={{ width: "100%", height: 200 }} notMerge lazyUpdate />
-            ) : (
-              <div className="text-xs text-black/70 italic">Không đủ dữ liệu 7 ngày tới.</div>
-            )}
+      <div
+        className="absolute pointer-events-auto left-3 right-3 bottom-3 sm:left-4 sm:right-auto sm:bottom-4 sm:w-[560px]"
+        style={{
+          paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0px)",
+          paddingLeft: "max(env(safe-area-inset-left, 0px), 0px)",
+          paddingRight: "max(env(safe-area-inset-right, 0px), 0px)",
+        }}
+      >
+        <div className="w-full rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[82vh] sm:max-h-[74vh] flex flex-col">
+          <div className="grid grid-cols-[40px_1fr_40px] items-center border-b border-slate-200 px-4 py-3 flex-shrink-0">
+            <div />
+            <div className="text-center min-w-0">
+              <div className="text-base sm:text-lg font-extrabold text-black truncate">{provinceName}</div>
+              <div className="text-xs text-slate-500">Dự báo ngắn hạn (7 ngày)</div>
+            </div>
+            <button onClick={onClose} className="rounded-lg p-2 hover:bg-slate-100" type="button" aria-label="Close">
+              <X className="h-5 w-5 text-black" />
+            </button>
           </div>
 
-          <div className="space-y-2">
-            <div className="font-bold text-sm text-black">Nhiệt độ 7 ngày qua</div>
-            {pastOption ? (
-              <ReactECharts option={pastOption} style={{ width: "100%", height: 200 }} notMerge lazyUpdate />
-            ) : (
-              <div className="text-xs text-black/70 italic">Không đủ dữ liệu 7 ngày qua.</div>
-            )}
+          <div className="p-3 sm:p-4 space-y-3 overflow-y-auto text-black flex-1">
+            <div className="space-y-2">
+              <div className="font-bold text-sm">Nhiệt độ 7 ngày tới</div>
+              {futureOption ? (
+                <div className="h-[170px] sm:h-[200px]">
+                  <ReactECharts option={futureOption} autoResize={false} style={{ width: "100%", height: "100%" }} notMerge lazyUpdate />
+                </div>
+              ) : (
+                <div className="text-xs text-black/70 italic">Không đủ dữ liệu 7 ngày tới.</div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="font-bold text-sm">Nhiệt độ 7 ngày qua</div>
+              {pastOption ? (
+                <div className="h-[170px] sm:h-[200px]">
+                  <ReactECharts option={pastOption} autoResize={false} style={{ width: "100%", height: "100%" }} notMerge lazyUpdate />
+                </div>
+              ) : (
+                <div className="text-xs text-black/70 italic">Không đủ dữ liệu 7 ngày qua.</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes slideIn {
-          from { transform: translateX(-16px); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }

@@ -9,6 +9,9 @@ from rest_framework import status
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.db import transaction
+from .models import UserRole
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -26,8 +29,18 @@ def register(request):
     if User.objects.filter(email=email).exists():
         return Response({"detail": "Email already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = User.objects.create_user(username=username, email=email, password=password)
-    return Response({"id": user.id, "username": user.username, "email": user.email}, status=status.HTTP_201_CREATED)
+    try:
+        with transaction.atomic():
+            user = User.objects.create_user(username=username, email=email, password=password)
+
+            # ✅ auto gán role mặc định = user
+            UserRole.objects.create(user=user, role="user")
+
+        return Response({"id": user.id, "username": user.username, "email": user.email}, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        # nếu insert role fail thì rollback cả user
+        return Response({"detail": f"Register failed: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -54,8 +67,14 @@ def login(request):
     )
 
 
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def me(request):
     u = request.user
-    return Response({"id": u.id, "username": u.username, "email": u.email}, status=status.HTTP_200_OK)
+    role = "user"
+    r = UserRole.objects.filter(user=u).first()
+    if r:
+        role = r.role
+    return Response({"id": u.id, "username": u.username, "email": u.email, "role": role}, status=status.HTTP_200_OK)
+

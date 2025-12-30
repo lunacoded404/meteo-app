@@ -1,5 +1,6 @@
 # backend/api/models.py
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Province(models.Model):
@@ -63,3 +64,43 @@ class ForecastCache(models.Model):
 
     class Meta:
         db_table = "forecast_cache"
+
+    
+
+
+
+
+# Role of user (admin/user)
+
+
+class UserRole(models.Model):
+    ROLE_CHOICES = [
+        ("user", "User"),
+        ("admin", "Admin"),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="role")
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES, default="user")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username}:{self.role}"
+    
+
+# Admin
+
+# Layers management
+
+
+class MapLayer(models.Model):
+    key = models.CharField(max_length=40, unique=True)      # temp|wind|rain|humidity|cloud
+    name = models.CharField(max_length=80)                  # label hiển thị (Nhiệt Độ, Gió...)
+    is_enabled = models.BooleanField(default=True)
+    icon = models.CharField(max_length=60, default="Thermometer")  # tên icon lucide
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.key
+

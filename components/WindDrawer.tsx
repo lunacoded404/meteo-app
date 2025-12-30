@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { X } from "lucide-react";
-import type { ProvinceWind } from "./popups/WindPopup";
-import type { WindRoseSector } from "./popups/WindPopup";
-
+import type { ProvinceWind, WindRoseSector } from "./popups/WindPopup";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false }) as any;
 
@@ -83,48 +81,73 @@ export default function WindDrawer({
   onClose: () => void;
   data: ProvinceWind | null;
 }) {
-  if (!open) return null;
-
+  // ✅ hooks luôn chạy
   const provinceName = data?.province?.name ?? "Gió";
   const sectors = data?.rose ?? [];
   const hasRoseData = sectors.length > 0;
 
   const roseOption = useMemo(() => makeWindRoseOption(sectors), [sectors]);
 
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
   return (
-    <div className="absolute left-4 bottom-4 z-[650] pointer-events-none">
-      <div className="pointer-events-auto w-[560px] max-w-[92vw] h-[62vh] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-[slideIn_200ms_ease-out]">
-        <div className="grid grid-cols-[40px_1fr_40px] items-center border-b border-slate-200 px-4 py-3">
-          <div />
-          <div className="text-center">
-            <div className="text-base sm:text-lg font-extrabold text-black">{provinceName}</div>
-            <div className="text-xs text-slate-500">
-              Wind rose ({data?.rose_period_hours ?? 24} giờ qua)
+    <div className="fixed inset-0 z-[4000]">
+      <button
+        type="button"
+        aria-label="Close overlay"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/35 backdrop-blur-[2px]"
+      />
+
+      <div
+        className="absolute pointer-events-auto left-3 right-3 bottom-3 sm:left-4 sm:right-auto sm:bottom-4 sm:w-[560px]"
+        style={{
+          paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0px)",
+          paddingLeft: "max(env(safe-area-inset-left, 0px), 0px)",
+          paddingRight: "max(env(safe-area-inset-right, 0px), 0px)",
+        }}
+      >
+        <div className="w-full rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[82vh] sm:max-h-[62vh] flex flex-col">
+          <div className="grid grid-cols-[40px_1fr_40px] items-center border-b border-slate-200 px-4 py-3 flex-shrink-0">
+            <div />
+            <div className="text-center min-w-0">
+              <div className="text-base sm:text-lg font-extrabold text-black truncate">{provinceName}</div>
+              <div className="text-xs text-slate-500">Wind rose ({data?.rose_period_hours ?? 24} giờ qua)</div>
             </div>
+            <button onClick={onClose} className="rounded-lg p-2 hover:bg-slate-100" type="button" aria-label="Close">
+              <X className="h-5 w-5 text-black" />
+            </button>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 hover:bg-slate-100" type="button" aria-label="Close">
-            <X className="h-5 w-5 text-black" />
-          </button>
-        </div>
 
-        <div className="p-3 sm:p-4 h-[calc(62vh-56px-44px)] overflow-y-auto">
-          {hasRoseData ? (
-            <ReactECharts option={roseOption} style={{ width: "100%", height: 420 }} notMerge lazyUpdate />
-          ) : (
-            <div className="text-xs text-slate-500 italic">
-              Chưa có đủ dữ liệu để vẽ wind rose cho khu vực này.
-            </div>
-          )}
+          <div className="p-3 sm:p-4 overflow-y-auto flex-1 text-black">
+            {hasRoseData ? (
+              <div className="h-[340px] sm:h-[420px]">
+                <ReactECharts
+                  option={roseOption}
+                  autoResize={false}
+                  style={{ width: "100%", height: "100%" }}
+                  notMerge
+                  lazyUpdate
+                />
+              </div>
+            ) : (
+              <div className="text-xs text-slate-500 italic">Chưa có đủ dữ liệu để vẽ wind rose cho khu vực này.</div>
+            )}
+          </div>
         </div>
-
       </div>
-
-      <style jsx global>{`
-        @keyframes slideIn {
-          from { transform: translateX(-16px); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }

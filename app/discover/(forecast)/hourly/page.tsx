@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -51,11 +49,8 @@ const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000").r
 const API_BASE = RAW_BASE.endsWith("/api") ? RAW_BASE : `${RAW_BASE}/api`;
 
 const STORAGE_KEY = "meteo:lastRegion";
-
-// ✅ cache list tỉnh/thành nhẹ
 const INDEX_CACHE_KEY = "meteo:provinceIndex:v1";
 
-// ✅ Default luôn là TP.HCM
 const DEFAULT_HCM: ProvinceIndexItem = {
   code: "79",
   name: "TP.Hồ Chí Minh",
@@ -64,8 +59,8 @@ const DEFAULT_HCM: ProvinceIndexItem = {
 
 export function Stat({ label, value, unit }: { label: string; value: any; unit?: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur">
-      <div className="text-[12px] text-slate-300">{label}</div>
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur">
+      <div className="text-[12px] text-slate-300 truncate">{label}</div>
       <div className="mt-1 text-[22px] font-semibold text-white">
         {value ?? "—"}
         {unit ? <span className="ml-1 text-[14px] text-slate-300">{unit}</span> : null}
@@ -93,10 +88,24 @@ export default function HourlyForecastPage() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // ✅ tránh trường hợp user chọn rất nhanh rồi fetch list về override selection
   const userSelectedRef = useRef(false);
 
-  // 1) Load provinces list (JSON nhẹ + cache local) cho search
+  // ✅ offsets cho floating panel: giảm trên mobile để khỏi che chart
+  const [fpTop, setFpTop] = useState(100);
+  const [fpActive, setFpActive] = useState(110);
+
+  useEffect(() => {
+    const apply = () => {
+      const isMobile = window.matchMedia("(max-width: 640px)").matches;
+      setFpTop(isMobile ? 88 : 110);
+      setFpActive(isMobile ? 96 : 120);
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    return () => window.removeEventListener("resize", apply);
+  }, []);
+
+  // 1) Load provinces list (cache local + fetch)
   useEffect(() => {
     let alive = true;
 
@@ -104,7 +113,6 @@ export default function HourlyForecastPage() {
       try {
         setLoadingList(true);
 
-        // ✅ (A) render tức thì từ localStorage (nếu có)
         const cachedRaw = localStorage.getItem(INDEX_CACHE_KEY);
         if (cachedRaw) {
           const cached = safeParseJSON<{ items: ProvinceIndexItem[] }>(cachedRaw);
@@ -116,7 +124,6 @@ export default function HourlyForecastPage() {
           if (alive && cachedItems.length) {
             setItems(cachedItems);
 
-            // restore selection từ localStorage nếu có
             const saved = safeParseJSON<ProvinceIndexItem>(localStorage.getItem(STORAGE_KEY));
             const found =
               (saved?.code ? cachedItems.find((p) => p.code === saved.code) : null) ??
@@ -127,7 +134,6 @@ export default function HourlyForecastPage() {
           }
         }
 
-        // ✅ (B) fetch list nhẹ từ backend
         const res = await fetch(`${API_BASE}/province-index/`, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as { items: ProvinceIndexItem[] };
@@ -142,7 +148,6 @@ export default function HourlyForecastPage() {
         setItems(arr);
         localStorage.setItem(INDEX_CACHE_KEY, JSON.stringify({ items: arr }));
 
-        // ✅ restore selection theo list mới (nhưng không override nếu user đã chọn)
         const saved = safeParseJSON<ProvinceIndexItem>(localStorage.getItem(STORAGE_KEY));
         const found =
           (saved?.code ? arr.find((p) => p.code === saved.code) : null) ??
@@ -165,7 +170,7 @@ export default function HourlyForecastPage() {
     };
   }, []);
 
-  // 2) Fetch bundle hourly khi selected thay đổi
+  // 2) Fetch hourly bundle
   useEffect(() => {
     if (!selected?.code) return;
 
@@ -178,7 +183,6 @@ export default function HourlyForecastPage() {
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
 
-        // ✅ days=7 để có đủ dữ liệu theo ngày/giờ (bạn có thể chỉnh 3/5/7)
         const url = `${API_BASE}/provinces/${selected.code}/bundle/?days=7&tz=Asia/Ho_Chi_Minh`;
         const res = await fetch(url, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -200,53 +204,52 @@ export default function HourlyForecastPage() {
     };
   }, [selected?.code]);
 
-  // current stats (từ payload.current)
   const cur = data?.current;
 
   return (
     <>
-      {/* ✅ Page container */}
-      <div className="mx-auto max-w-6xl px-4 pb-10">
-      {/* ✅ Top bar sticky (giống Overview) */}
-      <div className="sticky top-[96px] z-40">
-        {/* lớp nền tràn ra ngoài theo padding container */}
-        <div className="-mx-4 px-4 pb-3 pt-2">
-          {/* nền blur + border mềm */}
-          <div className="rounded-2xl border border-white/10 bg-gray-900/70 backdrop-blur">
-            <div className="px-4 py-3">
-              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <div className="text-[18px] font-semibold text-white">DỰ BÁO THEO GIỜ</div>
-                  <div className="text-[13px] text-slate-300">
-                    {selected ? `${selected.name}` : "TP.Hồ Chí Minh"}
+      {/* ✅ Container responsive */}
+      <div className="mx-auto w-full max-w-[1200px] px-3 sm:px-4 lg:px-6 pb-10">
+        {/* ✅ Top bar sticky: top responsive */}
+        <div className="sticky top-[84px] sm:top-[96px] z-40">
+          <div className="-mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6 pb-3 pt-2">
+            <div className="rounded-2xl border border-white/10 bg-gray-900/70 backdrop-blur">
+              <div className="px-3 sm:px-4 py-3">
+                <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                  <div className="min-w-0">
+                    <div className="text-[16px] sm:text-[18px] font-semibold text-white">
+                      DỰ BÁO THEO GIỜ
+                    </div>
+                    <div className="text-[13px] text-slate-300 truncate">
+                      {selected ? `${selected.name}` : "TP.Hồ Chí Minh"}
+                    </div>
+                  </div>
+
+                  {/* ✅ Search: full width trên mobile, gọn trên md+ */}
+                  <div className="w-full md:w-[360px] lg:w-[420px] pointer-events-auto">
+                    <ProvinceSearchBar
+                      items={items.length ? items : [DEFAULT_HCM]}
+                      placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
+                      onSelect={(it) => {
+                        userSelectedRef.current = true;
+                        setSelected(it);
+                      }}
+                    />
                   </div>
                 </div>
 
-                <div className="w-full md:w-[420px] pointer-events-auto">
-                  <ProvinceSearchBar
-                    items={items.length ? items : [DEFAULT_HCM]}
-                    placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
-                    onSelect={(it) => {
-                      userSelectedRef.current = true;
-                      setSelected(it);
-                    }}
-                  />
-                </div>
+                {err ? (
+                  <div className="mt-3 rounded-xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-rose-200">
+                    Lỗi: {err}
+                  </div>
+                ) : null}
               </div>
-
-              {err ? (
-                <div className="mt-3 rounded-xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-rose-200">
-                  Lỗi: {err}
-                </div>
-              ) : null}
             </div>
           </div>
         </div>
-      </div>
 
-
-        {/* ✅ Stats (current) */}
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-5">
+        {/* ✅ Stats: 1 → 2 → 3 → 5 để không bóp card */}
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <Stat label="Nhiệt độ hiện tại" value={cur?.temperature_c ?? null} unit="°C" />
           <Stat label="Độ ẩm hiện tại" value={cur?.humidity_percent ?? null} unit="%" />
           <Stat label="Mây che phủ" value={cur?.cloud_percent ?? null} unit="%" />
@@ -257,11 +260,15 @@ export default function HourlyForecastPage() {
         {loading ? <div className="mt-3 text-[13px] text-slate-300">Đang tải dự báo theo giờ…</div> : null}
 
         {/* ✅ Charts */}
-        <div className="mt-4">
+        <div className="mt-4 relative">
           {data?.hourly?.length ? (
             <>
-              <HourlyFloatingPanel topOffsetPx={110} activeOffsetPx={120} />
-              <HourlyCharts points={data.hourly} scrollOffsetPx={120} />
+              <HourlyFloatingPanel topOffsetPx={fpTop} activeOffsetPx={fpActive} />
+
+              {/* chống tràn ngang + cho chart có không gian tối thiểu */}
+              <div className="min-h-[360px] overflow-x-hidden">
+                <HourlyCharts points={data.hourly} scrollOffsetPx={fpActive} />
+              </div>
             </>
           ) : null}
         </div>

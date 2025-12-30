@@ -108,12 +108,12 @@ export default function AccountMenu() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cx(
-          "inline-flex items-center gap-2 rounded-full",
-          "bg-white",
-          "px-2.5 py-2",
-          "backdrop-blur-md",
-          "hover:bg-black/15 transition",
-          "focus:outline-none focus:ring-2 focus:ring-black/15"
+            "inline-flex items-center gap-2 rounded-full",
+            "bg-white",
+            "px-2.5 py-2 max-[420px]:px-2 max-[420px]:py-1.5",
+            "backdrop-blur-md",
+            "hover:bg-black/15 transition",
+            "focus:outline-none focus:ring-2 focus:ring-black/15"
         )}
         aria-haspopup="menu"
         aria-expanded={open}

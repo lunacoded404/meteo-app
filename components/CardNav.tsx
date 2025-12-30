@@ -1,17 +1,12 @@
+// src/components/CardNav.tsx
 "use client";
 
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { MapPin } from "lucide-react";
-
-// ✅ Import AccountMenu (đúng path theo project của bạn)
 import AccountMenu from "./auth/AccountMenu";
 
-type CardNavLink = {
-  label: string;
-  href: string;
-  ariaLabel: string;
-};
+type CardNavLink = { label: string; href: string; ariaLabel: string };
 
 export type CardNavItem = {
   label: string;
@@ -40,8 +35,6 @@ const CardNav: React.FC<CardNavProps> = ({
   ease = "power3.out",
   baseColor = "#fff",
   menuColor,
-  buttonBgColor,
-  buttonTextColor,
 }) => {
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -54,8 +47,10 @@ const CardNav: React.FC<CardNavProps> = ({
     if (!navEl) return 260;
 
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const viewportCap = Math.max(320, window.innerHeight - 24); // chừa 24px để không chạm mép
+
     if (isMobile) {
-      const contentEl = navEl.querySelector(".card-nav-content") as HTMLElement;
+      const contentEl = navEl.querySelector(".card-nav-content") as HTMLElement | null;
       if (contentEl) {
         const wasVisible = contentEl.style.visibility;
         const wasPointerEvents = contentEl.style.pointerEvents;
@@ -77,10 +72,11 @@ const CardNav: React.FC<CardNavProps> = ({
         contentEl.style.position = wasPosition;
         contentEl.style.height = wasHeight;
 
-        return topBar + contentHeight + padding;
+        return Math.min(topBar + contentHeight + padding, viewportCap);
       }
     }
-    return 260;
+
+    return Math.min(260, viewportCap);
   };
 
   const createTimeline = () => {
@@ -92,17 +88,8 @@ const CardNav: React.FC<CardNavProps> = ({
 
     const tl = gsap.timeline({ paused: true });
 
-    tl.to(navEl, {
-      height: calculateHeight,
-      duration: 0.4,
-      ease,
-    });
-
-    tl.to(
-      cardsRef.current,
-      { y: 0, opacity: 1, duration: 0.4, ease, stagger: 0.08 },
-      "-=0.1"
-    );
+    tl.to(navEl, { height: calculateHeight, duration: 0.4, ease });
+    tl.to(cardsRef.current, { y: 0, opacity: 1, duration: 0.4, ease, stagger: 0.08 }, "-=0.1");
 
     return tl;
   };
@@ -110,7 +97,6 @@ const CardNav: React.FC<CardNavProps> = ({
   useLayoutEffect(() => {
     const tl = createTimeline();
     tlRef.current = tl;
-
     return () => {
       tl?.kill();
       tlRef.current = null;
@@ -164,10 +150,9 @@ const CardNav: React.FC<CardNavProps> = ({
   };
 
   return (
-    // ✅ relative để đặt AccountMenu overlay không bị nav overflow-hidden cắt
     <div className={`card-nav-container w-full ${className} relative`}>
-      {/* ✅ AccountMenu nằm “trong CardNav” nhưng là sibling của <nav> để dropdown không bị cắt */}
-      <div className="absolute right-2 top-0 z-[80] pointer-events-auto h-[60px] flex items-center">
+      {/* ✅ AccountMenu sibling của <nav> để dropdown không bị overflow-hidden cắt */}
+      <div className="absolute right-2 sm:right-3 top-0 z-[200] pointer-events-auto h-[60px] flex items-center">
         <AccountMenu />
       </div>
 
@@ -176,43 +161,58 @@ const CardNav: React.FC<CardNavProps> = ({
         className={`card-nav ${isExpanded ? "open" : ""} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden will-change-[height]`}
         style={{ backgroundColor: baseColor }}
       >
-        <div className="card-nav-top absolute inset-x-0 top-0 h-[60px] flex items-center justify-between p-2 pl-[1.1rem] z-[2]">
-          <div
-            className={`hamburger-menu ${isHamburgerOpen ? "open" : ""} group h-full flex flex-col items-center justify-center cursor-pointer gap-[6px] order-2 md:order-none`}
-            onClick={toggleMenu}
-            role="button"
-            aria-label={isExpanded ? "Close menu" : "Open menu"}
-            tabIndex={0}
-            style={{ color: menuColor || "#000" }}
-          >
+        {/* ✅ TOP BAR: grid 3 cột để mobile không đè nhau */}
+        <div
+          className="
+            card-nav-top absolute inset-x-0 top-0 h-[60px] z-[2]
+            grid items-center
+            grid-cols-[52px_1fr_52px]
+            sm:grid-cols-[60px_1fr_110px]
+            md:grid-cols-[60px_1fr_140px]
+            px-2 sm:px-3
+          "
+        >
+          {/* Left: Hamburger */}
+          <div className="flex items-center justify-center">
             <div
-              className={`hamburger-line w-[30px] h-[2px] bg-current transition-[transform,opacity,margin] duration-300 ease-linear [transform-origin:50%_50%] ${
-                isHamburgerOpen ? "translate-y-[4px] rotate-45" : ""
-              } group-hover:opacity-75`}
-            />
-            <div
-              className={`hamburger-line w-[30px] h-[2px] bg-current transition-[transform,opacity,margin] duration-300 ease-linear [transform-origin:50%_50%] ${
-                isHamburgerOpen ? "-translate-y-[4px] -rotate-45" : ""
-              } group-hover:opacity-75`}
-            />
+              className={`hamburger-menu ${isHamburgerOpen ? "open" : ""} group h-full flex flex-col items-center justify-center cursor-pointer gap-[6px]`}
+              onClick={toggleMenu}
+              role="button"
+              aria-label={isExpanded ? "Close menu" : "Open menu"}
+              tabIndex={0}
+              style={{ color: menuColor || "#000" }}
+            >
+              <div
+                className={`hamburger-line w-[30px] h-[2px] bg-current transition-[transform,opacity,margin] duration-300 ease-linear [transform-origin:50%_50%] ${
+                  isHamburgerOpen ? "translate-y-[4px] rotate-45" : ""
+                } group-hover:opacity-75`}
+              />
+              <div
+                className={`hamburger-line w-[30px] h-[2px] bg-current transition-[transform,opacity,margin] duration-300 ease-linear [transform-origin:50%_50%] ${
+                  isHamburgerOpen ? "-translate-y-[4px] -rotate-45" : ""
+                } group-hover:opacity-75`}
+              />
+            </div>
           </div>
 
-          <div className="logo-container flex items-center md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none">
-            {typeof logo === "string" ? (
-              <img src={logo} alt={logoAlt} className="logo h-[28px]" />
-            ) : (
-              logo
-            )}
+          {/* Center: Logo */}
+          <div className="logo-container flex items-center justify-center min-w-0">
+            {typeof logo === "string" ? <img src={logo} alt={logoAlt} className="logo h-[28px]" /> : logo}
           </div>
 
-          {/* ✅ chừa khoảng trống bên phải đúng layout cũ (vì AccountMenu đang absolute) */}
-          <div className="w-[110px] md:w-[140px]" />
+          {/* Right: spacer để logo luôn “giữa”, AccountMenu đang absolute */}
+          <div />
         </div>
 
+        {/* Content */}
         <div
-          className={`card-nav-content absolute left-0 right-0 top-[60px] bottom-0 p-2 flex flex-col items-stretch gap-2 justify-start z-[1] ${
-            isExpanded ? "visible pointer-events-auto" : "invisible pointer-events-none"
-          } md:flex-row md:items-end md:gap-[12px]`}
+          className={`
+            card-nav-content absolute left-0 right-0 top-[60px] bottom-0 p-2 z-[1]
+            flex flex-col items-stretch gap-2 justify-start
+            md:flex-row md:items-end md:gap-[12px]
+            ${isExpanded ? "visible pointer-events-auto" : "invisible pointer-events-none"}
+            overflow-y-auto
+          `}
           aria-hidden={!isExpanded}
         >
           {(items || []).slice(0, 3).map((item, idx) => (
@@ -222,14 +222,14 @@ const CardNav: React.FC<CardNavProps> = ({
               ref={setCardRef(idx)}
               style={{ backgroundColor: item.bgColor, color: item.textColor }}
             >
-              <div className="nav-card-label font-normal tracking-[-0.5px] text-[18px] md:text-[22px]">
+              <div className="nav-card-label font-normal tracking-[-0.5px] text-[16px] sm:text-[18px] md:text-[22px]">
                 {item.label}
               </div>
               <div className="nav-card-links mt-auto flex flex-col gap-[2px]">
                 {item.links?.map((lnk, i) => (
                   <a
                     key={`${lnk.label}-${i}`}
-                    className="nav-card-link inline-flex items-center gap-[6px] no-underline cursor-pointer transition-opacity duration-300 hover:opacity-75 text-[15px] md:text-[16px]"
+                    className="nav-card-link inline-flex items-center gap-[6px] no-underline cursor-pointer transition-opacity duration-300 hover:opacity-75 text-[14px] sm:text-[15px] md:text-[16px]"
                     href={lnk.href}
                     aria-label={lnk.ariaLabel}
                   >

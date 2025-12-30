@@ -1,3 +1,4 @@
+// src/components/Header.tsx
 "use client";
 
 import React from "react";
@@ -32,27 +33,23 @@ const Header: React.FC = () => {
   ];
 
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[800px] pointer-events-none">
-      <div className="pointer-events-auto">
-        <CardNav
-          logo={
-            <div className="flex items-center gap-2">
-              <MapPin className="w-10 h-10 text-[var(--meteo-color)]" />
-              <SplitText
-                text="Weather App"
-                className="text-2xl font-semibold text-center text-black"
-              />
-            </div>
-          }
-          logoAlt="Welcome to my WebGIS!"
-          items={items}
-          baseColor="#fff"
-          menuColor="#000"
-          buttonBgColor="#111"
-          buttonTextColor="#fff"
-          ease="power3.out"
-        />
-      </div>
+    <header className="w-full">
+      <CardNav
+        className="mx-auto w-full max-w-[800px]"
+        logo={
+          <div className="flex items-center gap-2">
+            <MapPin className="w-9 h-9 sm:w-10 sm:h-10 text-[var(--meteo-color)]" />
+            <SplitText text="Weather App" className="text-xl sm:text-2xl font-semibold text-center text-black" />
+          </div>
+        }
+        logoAlt="Welcome to my WebGIS!"
+        items={items}
+        baseColor="#fff"
+        menuColor="#000"
+        buttonBgColor="#111"
+        buttonTextColor="#fff"
+        ease="power3.out"
+      />
     </header>
   );
 };
