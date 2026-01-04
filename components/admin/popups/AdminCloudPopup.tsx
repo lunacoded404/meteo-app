@@ -1,9 +1,6 @@
-"use client";
-
-import React from "react";
-import PopupCard, { Stat } from "../PopupCard";
-import { fmt } from "../helpers/popupUtils";
 import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
+import PopupCard, { Stat } from "@/components/PopupCard";
+import { fmt } from "@/components/helpers/popupUtils";
 
 export type ProvinceCloud = {
   province: { id: number; code: string; name: string };
@@ -55,17 +52,14 @@ const formatVisibilityKm = (m?: number | null) => {
   return m / 1000;
 };
 
-export default function CloudPopup({ data, loading, error, regionName }: CloudPopupProps) {
-  const provinceName = data?.province?.name || regionName || "Không rõ vùng";
+export default function AdminCloudPopup({ data, loading, error, regionName }: CloudPopupProps) {
+    const provinceName = data?.province?.name || regionName || "Không rõ vùng";
 
   const cloud = data?.current?.cloud_cover_percent ?? null;
   const visKm = formatVisibilityKm(data?.current?.visibility_m);
 
   const timeText = `Cập nhật lúc: ${formatDateTimeVN(data?.current?.time)}`;
   const desc = cloud == null ? "Chưa có dữ liệu mây hiện tại." : cloudDescriptionVN(cloud);
-
-  const code = data?.province?.code; // ✅ lấy code từ data
-
 
   return (
     <PopupCard
@@ -99,9 +93,12 @@ export default function CloudPopup({ data, loading, error, regionName }: CloudPo
           </div>
         </div>
       )}
-      <div className="mt-3 flex justify-end">
-        {code ? <AdminExportPdfButton provinceCode={code} /> : null}
-      </div>
+            {/* ✅ nút export chỉ admin */}
+      {data?.province?.code ? (
+        <div className="mt-3">
+          <AdminExportPdfButton provinceCode={data.province.code} />
+        </div>
+      ) : null}
     </PopupCard>
   );
 }

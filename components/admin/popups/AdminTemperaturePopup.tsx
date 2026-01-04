@@ -1,9 +1,7 @@
-"use client";
-
-import React, { useMemo } from "react";
-import PopupCard, { Stat } from "../PopupCard";
-import { fmt } from "../helpers/popupUtils";
 import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
+import { fmt } from "@/components/helpers/popupUtils";
+import PopupCard, { Stat } from "@/components/PopupCard";
+import { useMemo } from "react";
 
 export type DailyPoint = {
   time: string; // "YYYY-MM-DD"
@@ -57,26 +55,24 @@ const tempDescriptionVN = (t: number) => {
   return "Nắng nóng gay gắt, hạn chế ra ngoài giữa trưa và bổ sung nước.";
 };
 
-export default function TemperaturePopup({ data, loading, error, regionName }: TemperaturePopupProps) {
-
-  const code = data?.province?.code; // ✅ lấy code từ data
-  const provinceName = data?.province?.name || regionName || "Không rõ vùng";
-  const currentTemp = data?.current?.temperature ?? null;
-
-  const timeText = data?.current?.time
-    ? `Cập nhật lúc: ${formatDateTimeVN(data.current.time)}`
-    : "Cập nhật lúc: Không rõ";
-
-  const today = useMemo(() => {
-    const all = [...(data?.daily_past_7 ?? []), ...(data?.daily_future_7 ?? [])];
-    return pickToday(all);
-  }, [data]);
-
-  // ✅ icon theo nhiệt độ cao/thấp (giữ như cũ)
-  const iconSrc = currentTemp != null && currentTemp >= 28 ? "/high_temp.png" : "/short_temp.png";
-
-  const currentDesc =
-    currentTemp == null ? "Chưa có dữ liệu nhiệt độ hiện tại." : tempDescriptionVN(currentTemp);
+export default function AdminTemperaturePopup ({ data, loading, error, regionName }: TemperaturePopupProps) {
+    const provinceName = data?.province?.name || regionName || "Không rõ vùng";
+    const currentTemp = data?.current?.temperature ?? null;
+  
+    const timeText = data?.current?.time
+      ? `Cập nhật lúc: ${formatDateTimeVN(data.current.time)}`
+      : "Cập nhật lúc: Không rõ";
+  
+    const today = useMemo(() => {
+      const all = [...(data?.daily_past_7 ?? []), ...(data?.daily_future_7 ?? [])];
+      return pickToday(all);
+    }, [data]);
+  
+    // ✅ icon theo nhiệt độ cao/thấp (giữ như cũ)
+    const iconSrc = currentTemp != null && currentTemp >= 28 ? "/high_temp.png" : "/short_temp.png";
+  
+    const currentDesc =
+      currentTemp == null ? "Chưa có dữ liệu nhiệt độ hiện tại." : tempDescriptionVN(currentTemp);
 
   return (
     <PopupCard
@@ -110,9 +106,12 @@ export default function TemperaturePopup({ data, loading, error, regionName }: T
           </div>
         </div>
       )}
-      <div className="mt-3 flex justify-end">
-        {code ? <AdminExportPdfButton provinceCode={code} /> : null}
-      </div>
+    {/* ✅ nút export chỉ admin */}
+      {data?.province?.code ? (
+        <div className="mt-3">
+          <AdminExportPdfButton provinceCode={data.province.code} />
+        </div>
+      ) : null}
     </PopupCard>
   );
 }

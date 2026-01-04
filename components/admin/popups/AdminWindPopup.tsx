@@ -1,23 +1,27 @@
-"use client";
-
-import React from "react";
-import PopupCard, { Stat } from "../PopupCard";
-import { fmt } from "../helpers/popupUtils";
 import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
+import PopupCard from "@/components/PopupCard";
 
-export type ProvinceCloud = {
-  province: { id: number; code: string; name: string };
-  coord: { lat: number; lon: number };
-  timezone?: string;
-  current: {
-    time: string | null;
-    cloud_cover_percent: number | null;
-    visibility_m?: number | null; // ✅ optional
-  };
+export type WindRoseSector = {
+  dir_label: string; // ví dụ: "N", "NE", "E"...
+  count: number;     // tần suất
+  // có thể có thêm field nếu backend trả về
+  dir_deg?: number;
 };
 
-export type CloudPopupProps = {
-  data: ProvinceCloud | null;
+export type ProvinceWind = {
+  province: { id: number; code: string; name: string };
+  coord: { lat: number; lon: number };
+  current: {
+    wind_speed_kmh: number | null;
+    wind_direction_deg: number | null;
+    time: string | null;
+  };
+  rose_period_hours?: number;
+  rose?: any[];
+};
+
+export type WindPopupProps = {
+  data: ProvinceWind | null;
   loading: boolean;
   error: string | null;
   regionName?: string;
@@ -36,40 +40,26 @@ const formatDateTimeVN = (iso?: string | null) => {
   return `${hh}:${mi} • ${dd}/${mm}/${yyyy}`;
 };
 
-const cloudLabelVN = (c: number) => {
-  if (c < 20) return "Trời quang";
-  if (c < 50) return "Mây rải rác";
-  if (c < 80) return "Nhiều mây";
-  return "U ám";
+const windDescriptionVN = (kmh: number) => {
+  if (kmh < 6) return "Gió nhẹ, hầu như không ảnh hưởng.";
+  if (kmh < 20) return "Gió vừa, cảm nhận rõ khi ra ngoài trời.";
+  if (kmh < 35) return "Gió mạnh, lưu ý khi đi xe máy hoặc ngoài trời.";
+  if (kmh < 55) return "Gió rất mạnh, hạn chế hoạt động ngoài trời nếu có thể.";
+  return "Gió giật mạnh, cần đặc biệt cẩn trọng (ven biển/đồi núi).";
 };
 
-const cloudDescriptionVN = (c: number) => {
-  if (c < 20) return "Ít mây, trời quang đãng.";
-  if (c < 50) return "Mây rải rác, ánh nắng có thể xen kẽ.";
-  if (c < 80) return "Nhiều mây, nắng giảm và trời có thể âm u.";
-  return "U ám, ánh sáng giảm rõ rệt.";
-};
-
-const formatVisibilityKm = (m?: number | null) => {
-  if (m == null || Number.isNaN(m)) return null;
-  return m / 1000;
-};
-
-export default function CloudPopup({ data, loading, error, regionName }: CloudPopupProps) {
+export default function AdminWindPopup ({ data, loading, error, regionName }: WindPopupProps) {
   const provinceName = data?.province?.name || regionName || "Không rõ vùng";
 
-  const cloud = data?.current?.cloud_cover_percent ?? null;
-  const visKm = formatVisibilityKm(data?.current?.visibility_m);
+  const spd = data?.current?.wind_speed_kmh ?? null;
+  const dir = data?.current?.wind_direction_deg ?? null;
 
   const timeText = `Cập nhật lúc: ${formatDateTimeVN(data?.current?.time)}`;
-  const desc = cloud == null ? "Chưa có dữ liệu mây hiện tại." : cloudDescriptionVN(cloud);
-
-  const code = data?.province?.code; // ✅ lấy code từ data
-
+  const desc = spd == null ? "Chưa có dữ liệu gió hiện tại." : windDescriptionVN(spd);
 
   return (
     <PopupCard
-      icon={<img src="/cloud.png" alt="" className="w-6 h-6" draggable={false} />}
+      icon={<img src="/wind.png" alt="" className="w-6 h-6" draggable={false} />}
       title={provinceName}
       timeText={timeText}
       description={desc}
@@ -88,20 +78,23 @@ export default function CloudPopup({ data, loading, error, regionName }: CloudPo
             <div className="min-w-0">
               <div className="text-[11px] text-slate-500">Hiện tại</div>
               <div className="text-[28px] font-bold leading-none">
-                {cloud == null ? "—" : `${fmt(cloud, 0)}%`}
+                {spd == null ? "—" : `${spd} km/h`}
               </div>
             </div>
 
             <div className="flex gap-4">
-              <Stat label="Trạng thái" value={cloud == null ? "—" : cloudLabelVN(cloud)} />
-              {visKm != null && <Stat label="Tầm nhìn" value={`${fmt(visKm, 1)} km`} />}
+              {/* Thêm các phần tử khác nếu cần */}
             </div>
           </div>
         </div>
       )}
-      <div className="mt-3 flex justify-end">
-        {code ? <AdminExportPdfButton provinceCode={code} /> : null}
-      </div>
+
+      {/* ✅ nút export chỉ admin */}
+      {data?.province?.code ? (
+        <div className="mt-3">
+          <AdminExportPdfButton provinceCode={data.province.code} />
+        </div>
+      ) : null}
     </PopupCard>
   );
 }

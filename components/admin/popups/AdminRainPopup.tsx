@@ -1,9 +1,7 @@
-"use client";
-
-import React from "react";
-import PopupCard, { Stat } from "../PopupCard";
-import { fmt, clamp } from "../helpers/popupUtils";
 import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
+import { CloudPopupProps } from "./AdminCloudPopup";
+import PopupCard, { Stat } from "@/components/PopupCard";
+import { clamp, fmt } from "@/components/helpers/popupUtils";
 
 export type DailyRainPoint = {
   date: string; // "YYYY-MM-DD"
@@ -57,18 +55,18 @@ const rainDescriptionVN = (mmNow: number | null, probNow: number | null) => {
   return "Hầu như không mưa, thời tiết tương đối ổn định.";
 };
 
-export default function RainPopup({ data, loading, error, regionName }: RainPopupProps) {
-  const provinceName = data?.province?.name || regionName || "Không rõ vùng";
 
-  const mmNow = data?.current?.precipitation_mm ?? null;
-  const probNow = data?.current?.precipitation_probability ?? null;
-
-  const timeText = `Cập nhật lúc: ${formatDateTimeVN(data?.current?.time)}`;
-
-  const probBar = probNow == null ? 0 : clamp(probNow, 0, 100);
-  const desc = rainDescriptionVN(mmNow, probNow);
-
-  const code = data?.province?.code; // ✅ lấy code từ data
+export default function AdminRainPopup ({ data, loading, error, regionName }: RainPopupProps) {
+    const provinceName = data?.province?.name || regionName || "Không rõ vùng";
+  
+    const mmNow = data?.current?.precipitation_mm ?? null;
+    const probNow = data?.current?.precipitation_probability ?? null;
+  
+    const timeText = `Cập nhật lúc: ${formatDateTimeVN(data?.current?.time)}`;
+  
+    const probBar = probNow == null ? 0 : clamp(probNow, 0, 100);
+    const desc = rainDescriptionVN(mmNow, probNow);
+  
 
   return (
     <PopupCard
@@ -112,9 +110,12 @@ export default function RainPopup({ data, loading, error, regionName }: RainPopu
           </div>
         </div>
       )}
-      <div className="mt-3 flex justify-end">
-        {code ? <AdminExportPdfButton provinceCode={code} /> : null}
-      </div>
+    {/* ✅ nút export chỉ admin */}
+      {data?.province?.code ? (
+        <div className="mt-3">
+          <AdminExportPdfButton provinceCode={data.province.code} />
+        </div>
+      ) : null}
     </PopupCard>
   );
 }

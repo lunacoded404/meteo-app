@@ -11,6 +11,8 @@ import Forecast16Drawer from "@/components/discover/forecast/day/Forecast16Drawe
 import type { DailyPoint } from "@/components/discover/forecast/day/daily7.types";
 import { CalendarDays } from "lucide-react";
 
+import { trackRegion } from "@/lib/track";
+
 type BundlePayload = {
   region?: { code: string; name: string };
   daily: DailyPoint[];
@@ -208,14 +210,21 @@ export default function DailyForecast() {
                   {/* ✅ Tools: stack trên mobile, ngang từ md */}
                   <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
                     <div className="w-full md:w-[360px] lg:w-[420px] pointer-events-auto">
-                      <ProvinceSearchBar
-                        items={items.length ? items : [DEFAULT_HCM]}
-                        placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
-                        onSelect={(it) => {
-                          userSelectedRef.current = true;
-                          setSelected(it);
-                        }}
-                      />
+                  <ProvinceSearchBar
+                    items={items.length ? items : [DEFAULT_HCM]}
+                    placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
+                    onSelect={(it) => {
+                      userSelectedRef.current = true;
+                      setSelected(it);
+
+                      // ✅ track nguồn từ search
+                      trackRegion({
+                        province_code: it.code,
+                        province_name: it.name,
+                        source: "search",
+                      });
+                    }}
+                  />
                     </div>
 
                     <button

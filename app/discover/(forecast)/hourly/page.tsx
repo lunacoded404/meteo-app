@@ -7,6 +7,8 @@ import type { ProvinceIndexItem } from "@/components/discover/overview/RegionSea
 import HourlyCharts from "@/components/discover/forecast/hourly/HourlyCharts";
 import HourlyFloatingPanel from "@/components/discover/forecast/hourly/HourlyFloatingPanel";
 
+import { trackRegion } from "@/lib/track";
+
 /** Types (theo payload province_bundle normalize ở Django) */
 type HourlyPoint = {
   time: string;
@@ -227,14 +229,21 @@ export default function HourlyForecastPage() {
 
                   {/* ✅ Search: full width trên mobile, gọn trên md+ */}
                   <div className="w-full md:w-[360px] lg:w-[420px] pointer-events-auto">
-                    <ProvinceSearchBar
-                      items={items.length ? items : [DEFAULT_HCM]}
-                      placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
-                      onSelect={(it) => {
-                        userSelectedRef.current = true;
-                        setSelected(it);
-                      }}
-                    />
+                  <ProvinceSearchBar
+                    items={items.length ? items : [DEFAULT_HCM]}
+                    placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
+                    onSelect={(it) => {
+                      userSelectedRef.current = true;
+                      setSelected(it);
+
+                      // ✅ log truy cập từ thanh tìm kiếm
+                      trackRegion({
+                        province_code: it.code,
+                        province_name: it.name,
+                        source: "search",
+                      });
+                    }}
+                  />
                   </div>
                 </div>
 

@@ -13,6 +13,8 @@ import TrendsSection from "@/components/discover/overview/TrendsSection";
 import ProvinceSearchBar from "@/components/ProvinceSearchBar";
 import type { ProvinceIndexItem } from "@/components/discover/overview/RegionSearch";
 
+import { trackRegion } from "@/lib/track";
+
 const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000").replace(/\/$/, "");
 const API_BASE = RAW_BASE.endsWith("/api") ? RAW_BASE : `${RAW_BASE}/api`;
 
@@ -163,14 +165,21 @@ export default function OverviewPage() {
                   </div>
 
                   <div className="w-full md:w-[360px] lg:w-[420px] pointer-events-auto">
-                    <ProvinceSearchBar
-                      items={items.length ? items : [DEFAULT_HCM]}
-                      placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
-                      onSelect={(it) => {
-                        userSelectedRef.current = true;
-                        setSelected(it);
-                      }}
-                    />
+                  <ProvinceSearchBar
+                    items={items.length ? items : [DEFAULT_HCM]}
+                    placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
+                    onSelect={(it) => {
+                      userSelectedRef.current = true;
+                      setSelected(it);
+
+                      // ✅ track từ thanh tìm kiếm
+                      trackRegion({
+                        province_code: it.code,
+                        province_name: it.name,
+                        source: "search",
+                      });
+                    }}
+                  />
                   </div>
                 </div>
 

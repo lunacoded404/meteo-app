@@ -2,12 +2,14 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from api.views_admin_layers import AdminMapLayerViewSet
+from api.views_admin_users import AdminUserViewSet
 from api.views_layers_public import map_layers_public
 
 from . import views  # các views provinces hiện tại của bạn
 
 router = DefaultRouter()
 router.register(r"admin/layers", AdminMapLayerViewSet, basename="admin-layers")
+router.register(r"admin/users", AdminUserViewSet, basename="admin-users")
 
 urlpatterns = [
     # ✅ admin layers: /api/admin/layers/

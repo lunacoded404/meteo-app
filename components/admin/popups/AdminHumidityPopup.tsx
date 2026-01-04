@@ -1,9 +1,6 @@
-"use client";
-
-import React from "react";
-import PopupCard, { Stat } from "../PopupCard";
-import { fmt, clamp } from "../helpers/popupUtils";
 import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
+import { clamp, fmt } from "@/components/helpers/popupUtils";
+import PopupCard, { Stat } from "@/components/PopupCard";
 
 export type ProvinceHumidity = {
   province: { id: number; code: string; name: string };
@@ -49,16 +46,20 @@ const humidDescriptionVN = (h: number) => {
   return "Rất ẩm và dễ oi bức. Hạn chế hoạt động nặng, chú ý phòng nấm mốc.";
 };
 
-export default function HumidityPopup({ data, loading, error, regionName }: HumidityPopupProps) {
-  const provinceName = data?.province?.name || regionName || "Không rõ vùng";
 
-  const h = data?.current?.humidity_percent ?? null;
-  const bar = h == null ? 0 : clamp(h, 0, 100);
 
-  const timeText = `Cập nhật lúc: ${formatDateTimeVN(data?.current?.time)}`;
-  const desc = h == null ? "Chưa có dữ liệu độ ẩm hiện tại." : humidDescriptionVN(h);
+export default function AdminHumidityPopup ({ data, loading, error, regionName }: HumidityPopupProps) {
+    const provinceName = data?.province?.name || regionName || "Không rõ vùng";
+  
+    const h = data?.current?.humidity_percent ?? null;
+    const bar = h == null ? 0 : clamp(h, 0, 100);
+  
+    const timeText = `Cập nhật lúc: ${formatDateTimeVN(data?.current?.time)}`;
+    const desc = h == null ? "Chưa có dữ liệu độ ẩm hiện tại." : humidDescriptionVN(h);
 
-  const code = data?.province?.code; // ✅ lấy code từ data
+    function fmt(h: number, arg1: number) {
+        throw new Error("Function not implemented.");
+    }
 
   return (
     <PopupCard
@@ -97,9 +98,12 @@ export default function HumidityPopup({ data, loading, error, regionName }: Humi
           </div>
         </div>
       )}
-      <div className="mt-3 flex justify-end">
-        {code ? <AdminExportPdfButton provinceCode={code} /> : null}
-      </div>
+    {/* ✅ nút export chỉ admin */}
+      {data?.province?.code ? (
+        <div className="mt-3">
+          <AdminExportPdfButton provinceCode={data.province.code} />
+        </div>
+      ) : null}
     </PopupCard>
   );
 }
