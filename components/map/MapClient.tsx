@@ -360,7 +360,7 @@ export default function MapClient() {
         className="
           absolute z-[1000] pointer-events-auto
           left-3 right-3 top-3
-          sm:left-4 sm:right-auto sm:top-4
+          sm:left-13 sm:right-auto sm:top-4
           sm:w-[360px]
           lg:w-[420px]
         "

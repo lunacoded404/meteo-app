@@ -1,33 +1,30 @@
-export async function adminFetch(input: RequestInfo | URL, init?: RequestInit) {
-  const doFetch = () =>
-    fetch(input, {
-      ...init,
-      cache: "no-store",
-      credentials: "include",
-      headers: {
-        ...(init?.headers || {}),
-      },
-    });
+// src/lib/adminFetch.ts
+async function tryRefresh() {
+  const r = await fetch("/api/auth/refresh", {
+    method: "POST",
+    cache: "no-store",
+    credentials: "include",
+  });
+  return r.ok;
+}
 
-  let res = await doFetch();
+export async function adminFetch(input: string, init: RequestInit = {}) {
+  const first = await fetch(input, {
+    ...init,
+    cache: "no-store",
+    credentials: "include",
+  });
 
-  // ✅ nếu token hết hạn -> refresh -> retry 1 lần
-  if (res.status === 401) {
-    const cloned = res.clone();
-    const data = await cloned.json().catch(() => null);
+  if (first.status !== 401) return first;
 
-    if (data?.code === "token_not_valid") {
-      const r = await fetch("/api/auth/refresh", {
-        method: "POST",
-        credentials: "include",
-        cache: "no-store",
-      });
+  // ✅ thử refresh
+  const ok = await tryRefresh();
+  if (!ok) return first;
 
-      if (r.ok) {
-        res = await doFetch();
-      }
-    }
-  }
-
-  return res;
+  // ✅ retry request sau refresh
+  return fetch(input, {
+    ...init,
+    cache: "no-store",
+    credentials: "include",
+  });
 }

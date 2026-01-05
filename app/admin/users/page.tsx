@@ -44,7 +44,7 @@ export default async function UsersPage() {
   const data = await api<AdminUser[]>("/api/admin/users/");
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Users</h1>
+      <h1 className="text-xl font-semibold pl-50">Quản lý Users</h1>
       <UsersClient initial={data} />
     </div>
   );

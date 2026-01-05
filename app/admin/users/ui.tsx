@@ -68,7 +68,6 @@ async function deleteUser(id: number) {
   }
 }
 
-// ✅ optional: endpoint DRF action /set-password/
 async function setPassword(id: number, password: string) {
   const res = await fetch(`/api/admin/users/${id}/set-password/`, {
     method: "POST",
@@ -102,7 +101,7 @@ function RoleBadge({ isStaff }: { isStaff: boolean }) {
 }
 
 function FieldLabel({ children }: { children: any }) {
-  return <div className="text-[11px] text-white/50 mb-1">{children}</div>;
+  return <div className="text-[11px] text-white/55 mb-1">{children}</div>;
 }
 
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
@@ -112,14 +111,14 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
       className={cx(
         "w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2.5 outline-none",
         "text-white placeholder:text-white/35",
-        "focus:border-white/20 focus:bg-white/7",
+        "focus:border-white/20 focus:bg-white/10",
         props.className
       )}
     />
   );
 }
 
-// ✅ Custom combobox (Radix) — dropdown nền = y như input (bg-white/5), không còn trắng
+// ✅ Custom combobox (Radix)
 function ComboSelect({
   value,
   onValueChange,
@@ -136,14 +135,13 @@ function ComboSelect({
       <SelectPrimitive.Trigger
         className={cx(
           "inline-flex w-full items-center justify-between gap-2",
-          "rounded-xl px-3 py-3 outline-none border",          // ✅ py-3
-          "text-[15px]",                                      // ✅ chữ to hơn
+          "rounded-xl px-3 py-2.5 outline-none border",
+          "text-[14px] sm:text-[15px]",
           "bg-white/5 text-white border-white/10",
-          "focus:border-white/20 focus:bg-white/7",
+          "focus:border-white/20 focus:bg-white/10",
           className
         )}
       >
-
         <SelectPrimitive.Value />
         <SelectPrimitive.Icon className="text-white/60">
           <ChevronDown className="h-4 w-4" />
@@ -153,21 +151,21 @@ function ComboSelect({
       <SelectPrimitive.Portal>
         <SelectPrimitive.Content
           position="popper"
-          sideOffset={8}                                       // ✅ cách trigger xa hơn chút
+          sideOffset={8}
           className={cx(
-            "z-[1000] overflow-hidden rounded-2xl border shadow-xl", // ✅ bo lớn hơn
-            "border-white/10 bg-[rgba(255,255,255,0.05)] backdrop-blur-xl text-white",
-            "min-w-[var(--radix-select-trigger-width)]"             // ✅ rộng tối thiểu = trigger
+            "z-[1000] overflow-hidden rounded-2xl border shadow-xl",
+            "border-white/10 bg-[rgba(255,255,255,0.06)] backdrop-blur-xl text-white",
+            "min-w-[var(--radix-select-trigger-width)]"
           )}
         >
-          <SelectPrimitive.Viewport className="p-2">           {/* ✅ padding lớn hơn */}
+          <SelectPrimitive.Viewport className="p-2">
             {items.map((it) => (
               <SelectPrimitive.Item
                 key={it.value}
                 value={it.value}
                 className={cx(
-                  "relative flex cursor-pointer select-none items-center rounded-xl px-4 py-3", // ✅ item to
-                  "text-[15px] outline-none",                                                  // ✅ chữ to
+                  "relative flex cursor-pointer select-none items-center rounded-xl px-4 py-3",
+                  "text-[14px] sm:text-[15px] outline-none",
                   "text-white/85 hover:bg-white/10",
                   "data-[highlighted]:bg-white/10 data-[highlighted]:text-white",
                   "data-[state=checked]:bg-white/10"
@@ -175,7 +173,7 @@ function ComboSelect({
               >
                 <SelectPrimitive.ItemText>{it.label}</SelectPrimitive.ItemText>
                 <SelectPrimitive.ItemIndicator className="absolute right-3 inline-flex items-center">
-                  <Check className="h-5 w-5 text-emerald-300" />   {/* ✅ icon to hơn */}
+                  <Check className="h-5 w-5 text-emerald-300" />
                 </SelectPrimitive.ItemIndicator>
               </SelectPrimitive.Item>
             ))}
@@ -216,7 +214,8 @@ function Button({
   variant?: "primary" | "danger" | "ghost" | "default" | "warning";
   loading?: boolean;
 }) {
-  const base = "inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition border";
+  const base =
+    "inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition border whitespace-nowrap";
   const styles =
     variant === "primary"
       ? "bg-sky-400/90 hover:bg-sky-400 text-black border-transparent"
@@ -350,72 +349,108 @@ export default function UsersClient({ initial }: { initial: AdminUser[] }) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Search + Create */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          {/* Search */}
-          <div className="w-full lg:max-w-sm">
-            <FieldLabel>Tìm kiếm</FieldLabel>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-              <Input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Tìm username hoặc email..."
-                className="pl-9"
-              />
-            </div>
+    <div className="mx-auto max-w-6xl space-y-4 px-2 sm:px-4">
+      {/* ===== Top: Search + Create (2 cards) ===== */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+        {/* Search card */}
+        <div className="lg:col-span-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold text-white/90">Tìm kiếm</div>
+            <div className="text-[11px] text-white/45">{filtered.length}/{rows.length}</div>
           </div>
 
-          {/* Create form */}
-          <div className="w-full">
-            <FieldLabel>Tạo tài khoản</FieldLabel>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-              <Input value={newUsername} onChange={(e) => setNewUsername(e.target.value)} placeholder="username" />
-              <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email (optional)" />
+          <div className="mt-3 relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Tìm username hoặc email..."
+              className="pl-9"
+            />
+          </div>
+        </div>
+
+        {/* Create card */}
+        <div className="lg:col-span-8 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm font-semibold text-white/90">Tạo tài khoản</div>
+            <div className="text-[11px] text-white/45">Password tối thiểu 6 ký tự</div>
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-12">
+            <div className="xl:col-span-3">
+              <FieldLabel>Username</FieldLabel>
+              <Input value={newUsername} onChange={(e) => setNewUsername(e.target.value)} placeholder="Tên username" />
+            </div>
+
+            <div className="xl:col-span-3">
+              <FieldLabel>Email</FieldLabel>
+              <Input
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="Email (không bắt buộc)"
+              />
+            </div>
+
+            <div className="xl:col-span-2">
+              <FieldLabel>Role</FieldLabel>
               <RoleSelect isStaff={newIsStaff} onChange={setNewIsStaff} />
+            </div>
+
+            <div className="xl:col-span-2">
+              <FieldLabel>Password</FieldLabel>
               <Input
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="password (>= 6 ký tự)"
+                placeholder=">= 6 ký tự"
                 type="password"
               />
-              <Button variant="primary" onClick={onCreate} loading={busyId === "create"}>
+            </div>
+
+            <div className="xl:col-span-2 flex items-end">
+              <Button
+                variant="primary"
+                onClick={onCreate}
+                loading={busyId === "create"}
+                className="w-full"
+              >
                 <UserPlus className="h-4 w-4" />
                 {busyId === "create" ? "Đang tạo..." : "Tạo user"}
               </Button>
             </div>
           </div>
-        </div>
 
-        {err && (
-          <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-            {err}
-          </div>
-        )}
-
-        <div className="mt-3 text-xs text-white/50">
-          * Role dùng <b>is_staff</b>: Admin = true, User = false. Password tối thiểu 6 ký tự.
+          {err && (
+            <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+              {err}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Desktop table */}
+      {/* ===== Desktop table ===== */}
       <div className="hidden md:block overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]">
         <table className="min-w-[980px] w-full text-sm">
           <thead className="bg-white/5">
             <tr className="text-left">
-              <th className="px-4 py-3 w-[90px]">ID</th>
-              <th className="px-4 py-3">Username</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3 w-[160px]">Role</th>
-              <th className="px-4 py-3 w-[360px]">Actions</th>
+              <th className="px-4 py-3 w-[90px] text-white/70 font-semibold">ID</th>
+              <th className="px-4 py-3 text-white/70 font-semibold">Username</th>
+              <th className="px-4 py-3 text-white/70 font-semibold">Email</th>
+              <th className="px-4 py-3 w-[170px] text-white/70 font-semibold">Role</th>
+              <th className="px-4 py-3 w-[380px] text-white/70 font-semibold">Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {filtered.map((u) => (
-              <TableRow key={u.id} u={u} busy={busyId === u.id} onSave={onSave} onDelete={onDelete} onOpenPassword={openPw} />
+              <TableRow
+                key={u.id}
+                u={u}
+                busy={busyId === u.id}
+                onSave={onSave}
+                onDelete={onDelete}
+                onOpenPassword={openPw}
+              />
             ))}
 
             {!filtered.length && (
@@ -429,31 +464,41 @@ export default function UsersClient({ initial }: { initial: AdminUser[] }) {
         </table>
       </div>
 
-      {/* Mobile cards */}
+      {/* ===== Mobile cards ===== */}
       <div className="md:hidden space-y-2">
         {!filtered.length && (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-center text-white/60">Không có dữ liệu</div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-center text-white/60">
+            Không có dữ liệu
+          </div>
         )}
 
         {filtered.map((u) => (
-          <MobileCard key={u.id} u={u} busy={busyId === u.id} onSave={onSave} onDelete={onDelete} onOpenPassword={openPw} />
+          <MobileCard
+            key={u.id}
+            u={u}
+            busy={busyId === u.id}
+            onSave={onSave}
+            onDelete={onDelete}
+            onOpenPassword={openPw}
+          />
         ))}
       </div>
 
-      {/* password modal */}
+      {/* ===== Password modal ===== */}
       {pwOpen && pwUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-gray-950 p-4 sm:p-5">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-gray-950 p-4 sm:p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-base font-semibold">Đổi mật khẩu</div>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-white/60">
-                  <span className="font-medium text-white/80">{pwUser.username}</span>
+                <div className="text-base font-semibold text-white/90">Đổi mật khẩu</div>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/60">
+                  <span className="font-medium text-white/85">{pwUser.username}</span>
                   <span className="text-white/30">•</span>
                   <span>ID {pwUser.id}</span>
                   <RoleBadge isStaff={!!pwUser.is_staff} />
                 </div>
               </div>
+
               <button
                 onClick={() => {
                   setPwOpen(false);
@@ -493,8 +538,6 @@ export default function UsersClient({ initial }: { initial: AdminUser[] }) {
                 {busyId === pwUser.id ? "Đang lưu..." : "Cập nhật"}
               </Button>
             </div>
-
-            <div className="mt-2 text-[11px] text-white/50">* Password tối thiểu 6 ký tự.</div>
           </div>
         </div>
       )}
@@ -544,8 +587,14 @@ function TableRow({
       </td>
 
       <td className="px-4 py-3">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="primary" onClick={() => onSave(u.id, username, email, isStaff)} disabled={!dirty} loading={busy} title="Lưu">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="primary"
+            onClick={() => onSave(u.id, username, email, isStaff)}
+            disabled={!dirty}
+            loading={busy}
+            title="Lưu"
+          >
             <Save className="h-4 w-4" />
             {busy ? "Đang lưu..." : "Lưu"}
           </Button>
@@ -560,6 +609,12 @@ function TableRow({
             Xóa
           </Button>
         </div>
+
+        {dirty && (
+          <div className="mt-2 text-[11px] text-amber-200/80">
+            * Có thay đổi chưa lưu
+          </div>
+        )}
       </td>
     </tr>
   );
@@ -590,8 +645,8 @@ function MobileCard({
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm font-semibold text-white/90">{u.username}</div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-white/90 truncate">{u.username}</div>
           <div className="mt-0.5 text-xs text-white/55">ID: {u.id}</div>
         </div>
         <RoleBadge isStaff={isStaff} />
@@ -615,22 +670,30 @@ function MobileCard({
       </div>
 
       <div className="mt-3 flex flex-col gap-2">
-        <Button variant="primary" onClick={() => onSave(u.id, username, email, isStaff)} disabled={!dirty} loading={busy}>
+        <Button
+          variant="primary"
+          onClick={() => onSave(u.id, username, email, isStaff)}
+          disabled={!dirty}
+          loading={busy}
+          className="w-full"
+        >
           <Save className="h-4 w-4" />
           {busy ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
 
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="warning" onClick={() => onOpenPassword(u)} disabled={busy}>
+          <Button variant="warning" onClick={() => onOpenPassword(u)} disabled={busy} className="w-full">
             <KeyRound className="h-4 w-4" />
             Password
           </Button>
 
-          <Button variant="danger" onClick={() => onDelete(u.id)} disabled={busy}>
+          <Button variant="danger" onClick={() => onDelete(u.id)} disabled={busy} className="w-full">
             <Trash2 className="h-4 w-4" />
             Xóa
           </Button>
         </div>
+
+        {dirty && <div className="text-[11px] text-amber-200/80">* Có thay đổi chưa lưu</div>}
       </div>
     </div>
   );

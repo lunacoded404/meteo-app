@@ -17,10 +17,6 @@ export default function Map() {
   };
 
   return (
-    // <div className="h-[100vh] w-full relative">
-    //   <MapClient />
-
-    // </div>
 
     <div className="w-screen px-0">
       <div className="h-[82vh] min-h-[520px]">

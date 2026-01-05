@@ -1,13 +1,11 @@
 # backend/api/open_meteo.py
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 from django.db import connection
-
 
 # =========================
 # Open-Meteo endpoints
@@ -20,6 +18,14 @@ PROVINCES_TABLE = "public.provinces"
 
 # Timeout gọi API
 HTTP_TIMEOUT_SEC = 20
+
+# =========================
+# Cloud field normalize
+# =========================
+# Open-Meteo: hourly/current = cloud_cover
+# Open-Meteo: daily = cloud_cover_mean (thường), có thể có min/max tuỳ dataset
+DAILY_CLOUD_CANONICAL = "cloud_cover_mean"
+DAILY_CLOUD_ALIASES = {"cloud_cover": DAILY_CLOUD_CANONICAL}
 
 
 # =========================
@@ -80,7 +86,6 @@ def _om_get(url: str, lat: float, lon: float, params: Dict[str, Any]) -> Dict[st
     base.update(params)
 
     resp = requests.get(url, params=base, timeout=HTTP_TIMEOUT_SEC)
-    # Nếu 400/500 sẽ raise -> bắt ở view để trả lỗi
     resp.raise_for_status()
     return resp.json()
 
@@ -112,6 +117,31 @@ def _pick_hour_index(times: List[str], target: datetime) -> int:
     return best_i
 
 
+def _normalize_daily_fields(fields: List[str]) -> List[str]:
+    """
+    Normalize danh sách daily fields để tương thích Open-Meteo.
+    - Nếu ai đó truyền cloud_cover (hourly/current style) cho daily => đổi sang cloud_cover_mean.
+    """
+    out: List[str] = []
+    for f in fields:
+        f2 = DAILY_CLOUD_ALIASES.get(f, f)
+        if f2 not in out:
+            out.append(f2)
+    return out
+
+
+def _alias_daily_cloud(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Nếu payload daily có cloud_cover_mean mà FE đang xài cloud_cover,
+    thì thêm alias daily["cloud_cover"] = daily["cloud_cover_mean"].
+    """
+    daily = payload.get("daily")
+    if isinstance(daily, dict):
+        if DAILY_CLOUD_CANONICAL in daily and "cloud_cover" not in daily:
+            daily["cloud_cover"] = daily.get(DAILY_CLOUD_CANONICAL)
+    return payload
+
+
 # =========================
 # Public API (dùng trong views)
 # =========================
@@ -125,18 +155,24 @@ def om_forecast_daily(
     Lấy daily từ Forecast API cho khoảng ngày [start, end].
     daily_fields ví dụ:
       ["temperature_2m_max","temperature_2m_min","precipitation_sum","wind_speed_10m_max","cloud_cover_mean"]
+
+    ✅ Bạn cũng có thể truyền "cloud_cover" => backend tự đổi sang "cloud_cover_mean".
     """
     lat, lon = _get_latlon_by_province_code(province_code)
-    return _om_get(
+
+    normalized = _normalize_daily_fields(daily_fields)
+
+    payload = _om_get(
         OPEN_METEO_FORECAST_BASE,
         lat,
         lon,
         {
             "start_date": start.isoformat(),
             "end_date": end.isoformat(),
-            "daily": ",".join(daily_fields),
+            "daily": ",".join(normalized),
         },
     )
+    return _alias_daily_cloud(payload)
 
 
 def om_archive_daily(
@@ -147,18 +183,23 @@ def om_archive_daily(
 ) -> Dict[str, Any]:
     """
     Lấy daily từ Archive API cho khoảng ngày [start, end] (quá khứ).
+    ✅ Normalize cloud field tương tự forecast daily.
     """
     lat, lon = _get_latlon_by_province_code(province_code)
-    return _om_get(
+
+    normalized = _normalize_daily_fields(daily_fields)
+
+    payload = _om_get(
         OPEN_METEO_ARCHIVE_BASE,
         lat,
         lon,
         {
             "start_date": start.isoformat(),
             "end_date": end.isoformat(),
-            "daily": ",".join(daily_fields),
+            "daily": ",".join(normalized),
         },
     )
+    return _alias_daily_cloud(payload)
 
 
 def get_weather_snapshot(
@@ -169,6 +210,7 @@ def get_weather_snapshot(
     Dùng cho export PDF từ popup (temp/humidity/wind/cloud/rain).
     - Nếu day=None hoặc day=today: dùng Forecast 'current=' để lấy số liệu hiện tại.
     - Nếu day là ngày quá khứ: dùng Archive 'hourly=' (start=end=day) và lấy giá trị gần 12:00 trưa (giảm lệch).
+
     Trả về dict chuẩn:
       {
         "province_name": "...",

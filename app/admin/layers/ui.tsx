@@ -98,9 +98,9 @@ export default function LayersClient({ initial }: { initial: MapLayer[] }) {
 
       {/* stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatPill label="Total" value={`${rows.length}`} />
-        <StatPill label="Enabled" value={`${enabledCount}`} />
-        <StatPill label="Disabled" value={`${disabledCount}`} />
+        <StatPill label="Tổng cộng" value={`${rows.length}`} />
+        <StatPill label="Đã bật" value={`${enabledCount}`} />
+        <StatPill label="Đã tắt" value={`${disabledCount}`} />
       </div>
 
       {/* DESKTOP/TABLE */}
@@ -114,9 +114,9 @@ export default function LayersClient({ initial }: { initial: MapLayer[] }) {
             <table className="min-w-[720px] w-full text-sm">
               <thead className="bg-white/5 text-white/70">
                 <tr>
-                  <th className="text-left px-4 py-3 w-[110px]">Status</th>
+                  <th className="text-left px-4 py-3 w-[110px]">Trạng thái</th>
                   <th className="text-left px-4 py-3">Key</th>
-                  <th className="text-left px-4 py-3">Name</th>
+                  <th className="text-left px-4 py-3">Tên</th>
                   <th className="text-left px-4 py-3 w-[220px]">Icon</th>
                 </tr>
               </thead>
@@ -141,7 +141,7 @@ export default function LayersClient({ initial }: { initial: MapLayer[] }) {
                             r.is_enabled ? "bg-emerald-400" : "bg-white/40"
                           )}
                         />
-                        {busyId === r.id ? "Đang lưu..." : r.is_enabled ? "Enabled" : "Disabled"}
+                        {busyId === r.id ? "Đang lưu..." : r.is_enabled ? "Đã bật" : "Đã tắt"}
                       </button>
                     </td>
 
