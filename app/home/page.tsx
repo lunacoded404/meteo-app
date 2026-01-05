@@ -168,8 +168,9 @@ export default function WebGISIntroPage() {
             </div>
 
             <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">
-              NỀN TẢNG WEBGIS VỀ THỜI TIẾT: Bản đồ tương tác - Dự báo - Phân tích xu hướng
+              NỀN TẢNG WEBGIS VỀ THỜI TIẾT
             </h1>
+            <h3 className="text-2xl font-bold tracking-tight sm:text-2xl">Bản đồ tương tác - Dự báo - Phân tích xu hướng</h3>
 
             <p className="max-w-3xl text-sm text-white/70 sm:text-base">
               WebGIS giúp bạn xem lớp thời tiết trực quan trên bản đồ Việt Nam, tra cứu nhanh theo khu vực,
