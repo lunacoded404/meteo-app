@@ -207,7 +207,7 @@ export default function AccountMenu() {
                 <span className="grid place-items-center h-8 w-8 rounded-xl bg-black/5">
                   <LogIn className="h-4 w-4 text-black/70" />
                 </span>
-                Login
+                Đăng Nhập
               </Link>
 
               <Link
@@ -224,7 +224,7 @@ export default function AccountMenu() {
                 <span className="grid place-items-center h-8 w-8 rounded-xl bg-black/5">
                   <UserPlus className="h-4 w-4 text-black/70" />
                 </span>
-                Sign in
+                Đăng Ký
               </Link>
             </div>
           )}

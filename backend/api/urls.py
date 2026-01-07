@@ -28,4 +28,7 @@ urlpatterns = [
     path("provinces/<str:code>/cloud/", views.province_cloud),
     path("provinces/<str:code>/bundle/", views.province_bundle),
     path("province-index/", views.province_index),
+
+    path("places/hcm-districts/", views.hcm_districts),
+    path("places/kien-giang/", views.kien_giang_places),
 ]

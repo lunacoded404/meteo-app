@@ -328,7 +328,7 @@ export default function ReportsClient() {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-slate-700" />
-              <h1 className="text-lg sm:text-xl font-semibold text-slate-900">Báo cáo truy cập</h1>
+              <h1 className="text-lg sm:text-xl font-semibold text-slate-900">Báo cáo thống kê</h1>
             </div>
             <p className="mt-1 text-sm text-slate-600">
               Xem top tỉnh/thành theo nguồn truy cập và so sánh dữ liệu tuần này với tuần trước.

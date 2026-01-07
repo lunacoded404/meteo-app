@@ -1,30 +1,27 @@
-// src/lib/adminFetch.ts
-async function tryRefresh() {
-  const r = await fetch("/api/auth/refresh", {
-    method: "POST",
-    cache: "no-store",
-    credentials: "include",
-  });
-  return r.ok;
-}
+// lib/adminFetch.ts
+export async function adminFetch(input: RequestInfo, init: RequestInit = {}) {
+  const doFetch = () =>
+    fetch(input, {
+      ...init,
+      credentials: "include", // ✅ rất quan trọng nếu token/cookie
+      headers: { ...(init.headers || {}) },
+      cache: "no-store",
+    });
 
-export async function adminFetch(input: string, init: RequestInit = {}) {
-  const first = await fetch(input, {
-    ...init,
-    cache: "no-store",
-    credentials: "include",
-  });
+  let res = await doFetch();
 
-  if (first.status !== 401) return first;
+  // ✅ access expired -> refresh -> retry 1 lần
+  if (res.status === 401) {
+    const refreshed = await fetch("/api/auth/refresh/", {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+    });
 
-  // ✅ thử refresh
-  const ok = await tryRefresh();
-  if (!ok) return first;
+    if (refreshed.ok) {
+      res = await doFetch();
+    }
+  }
 
-  // ✅ retry request sau refresh
-  return fetch(input, {
-    ...init,
-    cache: "no-store",
-    credentials: "include",
-  });
+  return res;
 }

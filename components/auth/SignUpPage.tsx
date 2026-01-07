@@ -84,7 +84,7 @@ export default function SignUpPage() {
                 id="username"
                 name="username"
                 type="text"
-                placeholder="yourname..."
+                placeholder="Nhập username của bạn..."
                 className="w-full rounded-lg bg-gray-800 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-sky-400"
                 required
               />
@@ -112,7 +112,7 @@ export default function SignUpPage() {
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="min 6 chars..."
+                placeholder="Tối thiểu 6 ký tự..."
                 className="w-full rounded-lg bg-gray-800 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-sky-400"
                 required
               />
@@ -124,19 +124,19 @@ export default function SignUpPage() {
                   checked={showPassword}
                   onChange={() => setShowPassword((p) => !p)}
                 />
-                Show
+                Hiện
               </label>
             </div>
 
             <div className="flex flex-col gap-1">
               <label htmlFor="confirm" className="text-sm text-gray-200">
-                Confirm password
+                Xác nhận password
               </label>
               <input
                 id="confirm"
                 name="confirm"
                 type={showPassword ? "text" : "password"}
-                placeholder="repeat password..."
+                placeholder="Nhập lại password..."
                 className="w-full rounded-lg bg-gray-800 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-sky-400"
                 required
               />
@@ -147,16 +147,16 @@ export default function SignUpPage() {
               disabled={loading}
               className="mt-1 rounded-lg bg-sky-500 hover:bg-sky-400 disabled:opacity-60 text-sm font-semibold py-2 transition-colors"
             >
-              {loading ? "Creating..." : "Create account"}
+              {loading ? "Đang tạo..." : "Tạo tài khoản"}
             </button>
 
             {msg && <p className="text-xs text-gray-300">{msg}</p>}
           </form>
 
           <p className="mt-4 text-xs text-gray-400">
-            Already have an account?{" "}
+            Bạn đã có tài khoản?{" "}
             <Link href="/discover/login" className="text-sky-400 hover:underline">
-              Back to login
+              Đăng nhập tại đây!
             </Link>
           </p>
         </div>

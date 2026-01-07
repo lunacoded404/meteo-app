@@ -104,3 +104,22 @@ class MapLayer(models.Model):
     def __str__(self):
         return self.key
 
+# Phường xã
+
+class Place(models.Model):
+    code = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=255)
+    kind = models.CharField(max_length=64, default="hcm_district")
+    lat = models.FloatField()
+    lon = models.FloatField()
+    meta = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "places"
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+

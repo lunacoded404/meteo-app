@@ -2,13 +2,20 @@
 
 import "leaflet/dist/leaflet.css";
 
-
 import type { LatLngExpression, Map as LeafletMap, LatLng } from "leaflet";
 import { latLng } from "leaflet";
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { MapContainer, TileLayer, Popup, useMap } from "react-leaflet";
 
-import { Thermometer, Wind, Umbrella, Droplet, Cloudy, Layers as LayersIcon, Map as MapIcon } from "lucide-react";
+import {
+  Thermometer,
+  Wind,
+  Umbrella,
+  Droplet,
+  Cloudy,
+  Layers as LayersIcon,
+  Map as MapIcon,
+} from "lucide-react";
 
 import TemperaturePopup, { ProvinceWeather } from "../popups/TemperaturePopup";
 import TempDrawer from "../TempDrawer";
@@ -29,7 +36,6 @@ import { useProvinceIndex, type ProvinceIndexApiItem } from "./hooks/useProvince
 import { useRainviewerPath } from "./hooks/useRainviewerPath";
 import { fetchJsonSafe } from "./logic/openProvince";
 import { trackRegion } from "@/lib/track";
-
 
 const center: LatLngExpression = [16.047, 108.206];
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
@@ -68,9 +74,29 @@ type LayerSetting = {
   icon: string;
 };
 
+type PlaceItem = {
+  id: number;
+  code: string;
+  name: string;
+  centroid: { lat: number; lon: number };
+};
+
 function MapReady({ onReady }: { onReady: (map: LeafletMap) => void }) {
   const map = useMap();
   useEffect(() => onReady(map), [map, onReady]);
+  return null;
+}
+
+function ZoomWatcher({ onZoom }: { onZoom: (z: number) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    const fn = () => onZoom(map.getZoom());
+    fn();
+    map.on("zoomend", fn);
+    return () => {
+      map.off("zoomend", fn);
+    };
+  }, [map, onZoom]);
   return null;
 }
 
@@ -86,6 +112,7 @@ export default function MapClient() {
 
   const mapRef = useRef<LeafletMap | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(5);
 
   const [popupPosition, setPopupPosition] = useState<LatLngExpression | null>(null);
   const [popupLoading, setPopupLoading] = useState(false);
@@ -107,8 +134,67 @@ export default function MapClient() {
   const { items: provinceItems, lite } = useProvinceIndex(API_BASE);
   const provinceIndex: ProvinceIndexItem[] = useMemo(() => lite, [lite]);
 
+  // =========================
+  // ✅ HCM districts
+  // =========================
+  const [hcmDistricts, setHcmDistricts] = useState<PlaceItem[]>([]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/places/hcm-districts/`, { cache: "no-store" });
+        if (!res.ok) {
+          const t = await res.text().catch(() => "");
+          throw new Error(`${res.status} ${res.statusText}${t ? ` - ${t}` : ""}`);
+        }
+        const data = (await res.json()) as PlaceItem[];
+        setHcmDistricts(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error("Load HCM districts failed:", e);
+        setHcmDistricts([]);
+      }
+    })();
+  }, []);
+
+  // =========================
+  // ✅ Kiên Giang places
+  // =========================
+  const [kgPlaces, setKgPlaces] = useState<PlaceItem[]>([]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/places/kien-giang/`, { cache: "no-store" });
+        if (!res.ok) {
+          const t = await res.text().catch(() => "");
+          throw new Error(`${res.status} ${res.statusText}${t ? ` - ${t}` : ""}`);
+        }
+        const data = (await res.json()) as PlaceItem[];
+        setKgPlaces(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error("Load Kien Giang places failed:", e);
+        setKgPlaces([]);
+      }
+    })();
+  }, []);
+
+  // ✅ đưa places vào search
+  const hcmIndex: ProvinceIndexItem[] = useMemo(
+    () => hcmDistricts.map((d) => ({ code: d.code, name: d.name, centroid: d.centroid })),
+    [hcmDistricts]
+  );
+
+  const kgIndex: ProvinceIndexItem[] = useMemo(
+    () => kgPlaces.map((d) => ({ code: d.code, name: d.name, centroid: d.centroid })),
+    [kgPlaces]
+  );
+
+  const searchItems: ProvinceIndexItem[] = useMemo(() => {
+    return [...provinceIndex, ...hcmIndex, ...kgIndex];
+  }, [provinceIndex, hcmIndex, kgIndex]);
+
   // ✅ load layer settings từ DB
-  const [layerSettings, setLayerSettings] = useState<Record<WeatherLayerKey, LayerSetting> | null>(null);
+  const [layerSettings, setLayerSettings] = useState<Record<WeatherLayerKey, LayerSetting> | null>(
+    null
+  );
 
   useEffect(() => {
     (async () => {
@@ -143,7 +229,7 @@ export default function MapClient() {
           key: d.key,
           label: s?.name ?? d.fallbackName,
           iconName: s?.icon ?? d.fallbackIcon,
-          enabled: s ? !!s.is_enabled : true, // nếu chưa load được DB thì fallback hiển thị
+          enabled: s ? !!s.is_enabled : true,
           defaultVisible: d.defaultVisible,
         };
       })
@@ -155,7 +241,6 @@ export default function MapClient() {
     if (!visibleLayers.length) return;
     if (!visibleLayers.some((x) => x.key === activeLayerKeyRef.current)) {
       setActiveLayerKey(visibleLayers[0].key);
-      // resetPopup() sẽ được gọi ở toggleLayer, nên gọi trực tiếp luôn:
       resetPopup();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -216,8 +301,7 @@ export default function MapClient() {
     setSelectedRegionName(p.name);
 
     const centerLL = clickedLatLng ?? latLng(p.centroid.lat, p.centroid.lon);
-    const popupPos =
-      centerLL ?? (mapRef.current ? mapRef.current.getCenter() : latLng(16.047, 108.206));
+    const popupPos = centerLL ?? (mapRef.current ? mapRef.current.getCenter() : latLng(16.047, 108.206));
 
     if (zoom && mapRef.current && centerLL) {
       mapRef.current.setView(centerLL, Math.max(mapRef.current.getZoom(), 8), { animate: true });
@@ -246,6 +330,7 @@ export default function MapClient() {
     try {
       const safeCode = encodeURIComponent(p.code);
 
+      // ✅ backend sẽ resolve code: tỉnh hoặc places
       if (k === "temp") {
         setTempData(await fetchJsonSafe<ProvinceWeather>(`${API_BASE}/api/provinces/${safeCode}/weather/`));
       } else if (k === "wind") {
@@ -270,26 +355,37 @@ export default function MapClient() {
     }
   };
 
-  const openProvinceByCode = async (
-    code: string,
-    opts?: { name?: string; latlng?: LatLng; zoom?: boolean }
-  ) => {
-    const found = provinceItems.find((x) => x.code === code);
+  // ✅ mở theo code: tìm cả tỉnh + HCM districts + Kiên Giang places
+  const openRegionByCode = async (code: string, opts?: { name?: string; latlng?: LatLng; zoom?: boolean }) => {
+    const foundProvince = provinceItems.find((x) => x.code === code);
+    if (foundProvince) return openProvince(foundProvince, { latlng: opts?.latlng, zoom: opts?.zoom });
 
-    if (!found) {
-      const pFallback = { id: 0, code, name: opts?.name ?? code, centroid: { lat: 16.047, lon: 108.206 } };
-      return openProvince(pFallback, { latlng: opts?.latlng, zoom: opts?.zoom });
+    const foundHcm = hcmDistricts.find((x) => x.code === code);
+    if (foundHcm) {
+      return openProvince(
+        { id: foundHcm.id, code: foundHcm.code, name: foundHcm.name, centroid: foundHcm.centroid } as any,
+        { latlng: opts?.latlng, zoom: opts?.zoom }
+      );
     }
 
-    return openProvince(found, { latlng: opts?.latlng, zoom: opts?.zoom });
+    const foundKg = kgPlaces.find((x) => x.code === code);
+    if (foundKg) {
+      return openProvince(
+        { id: foundKg.id, code: foundKg.code, name: foundKg.name, centroid: foundKg.centroid } as any,
+        { latlng: opts?.latlng, zoom: opts?.zoom }
+      );
+    }
+
+    const pFallback = { id: 0, code, name: opts?.name ?? code, centroid: { lat: 16.047, lon: 108.206 } };
+    return openProvince(pFallback as any, { latlng: opts?.latlng, zoom: opts?.zoom });
   };
 
-  // ✅ popup width: mobile dùng ~92vw (không tràn), desktop giữ 360
+  // ✅ popup width
   const w = typeof window !== "undefined" ? window.innerWidth : 1200;
   const popupMaxW = isMobile ? Math.min(420, Math.floor(w * 0.92)) : 360;
-  const popupMinW = isMobile ? Math.min(320, Math.floor(w * 0.80)) : 260;
+  const popupMinW = isMobile ? Math.min(320, Math.floor(w * 0.8)) : 260;
 
-  const lastTrackedRef = useRef<string>(""); 
+  const lastTrackedRef = useRef<string>("");
 
   return (
     <div className="h-full w-full relative">
@@ -301,6 +397,7 @@ export default function MapClient() {
             setMapReady(true);
           }}
         />
+        <ZoomWatcher onZoom={setZoomLevel} />
 
         {mapReady && (
           <>
@@ -310,22 +407,55 @@ export default function MapClient() {
             />
 
             <RainviewerLayer active={activeLayerKey === "rain"} rainviewerPath={rainviewerPath} />
-            
+
+            {/* ✅ Marker tỉnh */}
             <ProvinceCentroidLayer
               items={provinceItems}
               layerKey={activeLayerKey}
               onPick={(p, latlng) => {
-                // ✅ log nguồn từ map (click marker)
                 trackRegion({
                   province_code: p.code,
                   province_name: p.name,
                   source: "map",
-                  meta: { layer: activeLayerKey, kind: "centroid_marker" },
+                  meta: { layer: activeLayerKey, kind: "province_centroid" },
                 });
-
                 openProvince(p, { latlng, zoom: false });
               }}
             />
+
+            {/* ✅ Marker HCM: hiện khi zoom gần */}
+            {zoomLevel >= 9 && (
+              <ProvinceCentroidLayer
+                items={hcmDistricts as any}
+                layerKey={activeLayerKey}
+                onPick={(p: any, latlng) => {
+                  trackRegion({
+                    province_code: p.code,
+                    province_name: p.name,
+                    source: "map",
+                    meta: { layer: activeLayerKey, kind: "hcm_district" },
+                  });
+                  openProvince(p, { latlng, zoom: false });
+                }}
+              />
+            )}
+
+            {/* ✅ Marker Kiên Giang: hiện khi zoom >= 8 (đỡ rối) */}
+            {zoomLevel >= 8 && (
+              <ProvinceCentroidLayer
+                items={kgPlaces as any}
+                layerKey={activeLayerKey}
+                onPick={(p: any, latlng) => {
+                  trackRegion({
+                    province_code: p.code,
+                    province_name: p.name,
+                    source: "map",
+                    meta: { layer: activeLayerKey, kind: "kien_giang_place" },
+                  });
+                  openProvince(p, { latlng, zoom: false });
+                }}
+              />
+            )}
 
             {popupPosition && (
               <Popup
@@ -356,6 +486,7 @@ export default function MapClient() {
         )}
       </MapContainer>
 
+      {/* Search */}
       <div
         className="
           absolute z-[1000] pointer-events-auto
@@ -366,22 +497,21 @@ export default function MapClient() {
         "
         style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
       >
-      <ProvinceSearchBar
-        items={provinceIndex}
-        onSelect={(it: ProvinceIndexItem) => {
-          if (lastTrackedRef.current !== it.code) {
-            lastTrackedRef.current = it.code;
-            trackRegion({
-              province_code: it.code,
-              province_name: it.name,
-              source: "search",
-            });
-          }
-
-          openProvinceByCode(it.code, { name: it.name, zoom: true });
-        }}
-        placeholder="Tìm theo tên tỉnh/thành..."
-      />
+        <ProvinceSearchBar
+          items={searchItems}
+          onSelect={(it: ProvinceIndexItem) => {
+            if (lastTrackedRef.current !== it.code) {
+              lastTrackedRef.current = it.code;
+              trackRegion({
+                province_code: it.code,
+                province_name: it.name,
+                source: "search",
+              });
+            }
+            openRegionByCode(it.code, { name: it.name, zoom: true });
+          }}
+          placeholder="Tìm theo tên tỉnh/thành hoặc địa điểm..."
+        />
       </div>
 
       {/* Drawers */}
@@ -415,6 +545,7 @@ export default function MapClient() {
         data={rainData}
       />
 
+      {/* Right controls */}
       <div
         className="
           absolute z-[1000] pointer-events-auto
@@ -454,7 +585,6 @@ export default function MapClient() {
           <span className="text-xs font-medium">Dự báo ngắn hạn</span>
         </label>
 
-        {/* ✅ FAB render theo DB (enabled + icon) */}
         <div className="flex flex-col gap-2 rounded-2xl bg-slate-900/80 p-2 shadow-lg backdrop-blur">
           {visibleLayers.map((l) => {
             const Icon = ICON_MAP[l.iconName] ?? ICON_MAP.Layers;
@@ -469,11 +599,7 @@ export default function MapClient() {
             );
           })}
 
-          {!visibleLayers.length && (
-            <div className="px-2 py-2 text-xs text-white/70">
-              Không có layer nào đang bật.
-            </div>
-          )}
+          {!visibleLayers.length && <div className="px-2 py-2 text-xs text-white/70">Không có layer nào đang bật.</div>}
         </div>
       </div>
     </div>
