@@ -80,12 +80,12 @@ async function authedFetch(url: string, init?: RequestInit) {
 
 // --- Main Route Handlers ---
 
-export async function PATCH(req: NextRequest, ctx: Props) { // ✅ Đổi Request thành NextRequest
+export async function PATCH(req: NextRequest, ctx: Props) {
   try {
     if (!API_BASE) return json(500, { ok: false, error: "Missing NEXT_PUBLIC_API_BASE" });
 
-    // ✅ Unwrapping params chuẩn chỉnh
-    const { id } = await ctx.params; 
+    // Giải nén params bằng await (bắt buộc)
+    const { id } = await ctx.params;
     
     const upstream = new URL(`/api/admin/users/${id}/`, API_BASE);
     const body = await req.text();
@@ -98,12 +98,11 @@ export async function PATCH(req: NextRequest, ctx: Props) { // ✅ Đổi Reques
 
     return forward(up);
   } catch (e: any) {
-    console.error("PATCH /api/admin/users/[id] failed:", e);
     return json(500, { ok: false, error: String(e?.message ?? e) });
   }
 }
 
-export async function DELETE(req: NextRequest, ctx: Props) { // ✅ Phải nhận req ngay cả khi không dùng (_)
+export async function DELETE(req: NextRequest, ctx: Props) {
   try {
     if (!API_BASE) return json(500, { ok: false, error: "Missing NEXT_PUBLIC_API_BASE" });
 
@@ -114,7 +113,6 @@ export async function DELETE(req: NextRequest, ctx: Props) { // ✅ Phải nhậ
 
     return forward(up);
   } catch (e: any) {
-    console.error("DELETE /api/admin/users/[id] failed:", e);
     return json(500, { ok: false, error: String(e?.message ?? e) });
   }
 }
