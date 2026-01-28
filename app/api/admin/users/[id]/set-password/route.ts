@@ -1,14 +1,8 @@
-// app/api/admin/users/route.ts
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-
-type Props = {
-  params: Promise<{ id: string }>
-}
-
 export const dynamic = "force-dynamic";
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
 
 function forward(res: Response) {
   const contentType = res.headers.get("content-type") ?? "application/json";
@@ -25,16 +19,7 @@ async function setCookie(name: string, value: string) {
   store.set(name, value, { httpOnly: true, sameSite: "lax", path: "/" });
 }
 
-async function isExpiredTokenResponse(res: Response): Promise<boolean> {
-  if (res.status !== 401) return false;
-  const text = await res.clone().text().catch(() => "");
-  // SimpleJWT thường có: "token_not_valid" + "Token is expired"
-  return text.includes("token_not_valid") && (text.includes("expired") || text.includes("Token is expired"));
-}
-
 async function refreshAccess(): Promise<string | null> {
-  if (!API_BASE) return null;
-
   const refresh = await getCookie("refresh_token");
   if (!refresh) return null;
 
@@ -46,7 +31,6 @@ async function refreshAccess(): Promise<string | null> {
   });
 
   if (!r.ok) return null;
-
   const data = (await r.json()) as { access?: string };
   if (!data?.access) return null;
 
@@ -61,35 +45,26 @@ async function authedFetch(url: string, init?: RequestInit) {
 
   let res = await fetch(url, { ...init, headers, cache: "no-store" });
 
-  // ✅ access hết hạn -> refresh -> retry 1 lần
-  if (await isExpiredTokenResponse(res)) {
-    const newAccess = await refreshAccess();
-    if (newAccess) {
-      headers.Authorization = `Bearer ${newAccess}`;
-      res = await fetch(url, { ...init, headers, cache: "no-store" });
+  if (res.status === 401) {
+    const text = await res.clone().text().catch(() => "");
+    const expired = text.includes("token_not_valid") || text.includes("Token is expired") || text.includes("expired");
+    if (expired) {
+      const newAccess = await refreshAccess();
+      if (newAccess) {
+        headers.Authorization = `Bearer ${newAccess}`;
+        res = await fetch(url, { ...init, headers, cache: "no-store" });
+      }
     }
   }
-
   return res;
 }
 
-export async function GET(req: Request, ctx: Props) {
-  if (!API_BASE) return NextResponse.json({ detail: "Missing NEXT_PUBLIC_API_BASE" }, { status: 500 });
+// Next 16: params là Promise
+type Ctx = { params: Promise<{ id: string }> };
 
-
-  const u = new URL(req.url);
-  const upstream = new URL("/api/admin/users/", API_BASE);
-  upstream.search = u.search;
-
-  const res = await authedFetch(upstream.toString(), { method: "GET" });
-  return forward(res);
-}
-
-export async function POST(req: Request, ctx: Props) {
-  if (!API_BASE) return NextResponse.json({ detail: "Missing NEXT_PUBLIC_API_BASE" }, { status: 500 });
-
-
-  const upstream = new URL("/api/admin/users/", API_BASE);
+export async function POST(req: Request, ctx: Ctx) {
+  const { id } = await ctx.params;
+  const upstream = new URL(`/api/admin/users/${id}/set-password/`, API_BASE);
   const body = await req.text();
 
   const res = await authedFetch(upstream.toString(), {

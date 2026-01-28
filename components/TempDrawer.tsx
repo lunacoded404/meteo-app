@@ -69,7 +69,7 @@ const makeChartOption = (points: { date: string; tmin: number | null; tmax: numb
       smooth: true,
       symbolSize: 6,
       itemStyle: { color: "#2563eb" },
-      lineStyle: { color: "#2563eb", width: 2 },
+      lineStyle: { color: "blue", width: 2 },
       label: { show: true, position: "top", fontSize: 9, color: "#2563eb" },
     },
   ],

@@ -43,7 +43,7 @@ async function createUser(payload: { username: string; email: string; password: 
 }
 
 async function patchUser(id: number, payload: Partial<Pick<AdminUser, "username" | "email" | "is_staff">>) {
-  const res = await fetch(`/api/admin/users/${id}/`, {
+  const res = await fetch(`/api/admin/users/${id}/`, {   // ✅ thêm /
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -61,15 +61,21 @@ async function patchUser(id: number, payload: Partial<Pick<AdminUser, "username"
 }
 
 async function deleteUser(id: number) {
-  const res = await fetch(`/api/admin/users/${id}/`, { method: "DELETE", cache: "no-store" });
+  const res = await fetch(`/api/admin/users/${id}/`, { // ✅ có dấu /
+    method: "DELETE",
+    cache: "no-store",
+  });
+
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(text || `HTTP ${res.status}`);
   }
 }
 
+
+
 async function setPassword(id: number, password: string) {
-  const res = await fetch(`/api/admin/users/${id}/set-password/`, {
+  const res = await fetch(`/api/admin/users/${id}/set-password/`, { // ✅ thêm /
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password }),
@@ -80,6 +86,7 @@ async function setPassword(id: number, password: string) {
     throw new Error(text || `HTTP ${res.status}`);
   }
 }
+
 
 type BusyId = number | "create" | null;
 

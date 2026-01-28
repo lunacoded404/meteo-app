@@ -1,14 +1,14 @@
 // app/admin/users/page.tsx
 import UsersClient from "./ui";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export type AdminUser = {
   id: number;
   username: string;
   email: string;
-  is_staff: boolean; // ✅ role
+  is_staff: boolean;
 };
-
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +22,6 @@ async function getOrigin() {
 
 async function api<T>(path: string): Promise<T> {
   const h = await headers();
-
-  // ✅ forward cookie của request hiện tại sang fetch nội bộ
   const cookie = h.get("cookie") ?? "";
 
   const origin = await getOrigin();
@@ -31,12 +29,19 @@ async function api<T>(path: string): Promise<T> {
 
   const res = await fetch(url, {
     cache: "no-store",
-    headers: {
-      cookie, // ✅ quan trọng: để /api/admin/users đọc được access_token từ cookies()
-    },
+    headers: { cookie },
   });
 
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  // ✅ không crash 500 nữa
+  if (res.status === 401) {
+    redirect(`/discover/login?next=/admin/users`);
+  }
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Fetch failed: ${res.status}${text ? ` - ${text}` : ""}`);
+  }
+
   return res.json();
 }
 
@@ -44,7 +49,7 @@ export default async function UsersPage() {
   const data = await api<AdminUser[]>("/api/admin/users/");
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold pl-50">Quản lý Users</h1>
+      <h1 className="text-xl font-semibold">Quản lý Users</h1>
       <UsersClient initial={data} />
     </div>
   );
