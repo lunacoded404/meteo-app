@@ -1,11 +1,7 @@
 // app/api/admin/users/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"; // ✅ Sử dụng NextRequest
 import { cookies } from "next/headers";
 
-
-type Props = {
-  params: Promise<{ id: string }>
-}
 
 export const dynamic = "force-dynamic";
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
@@ -73,9 +69,8 @@ async function authedFetch(url: string, init?: RequestInit) {
   return res;
 }
 
-export async function GET(req: Request, ctx: Props) {
+export async function GET(req: NextRequest) { 
   if (!API_BASE) return NextResponse.json({ detail: "Missing NEXT_PUBLIC_API_BASE" }, { status: 500 });
-
 
   const u = new URL(req.url);
   const upstream = new URL("/api/admin/users/", API_BASE);
@@ -85,9 +80,8 @@ export async function GET(req: Request, ctx: Props) {
   return forward(res);
 }
 
-export async function POST(req: Request, ctx: Props) {
+export async function POST(req: NextRequest) {
   if (!API_BASE) return NextResponse.json({ detail: "Missing NEXT_PUBLIC_API_BASE" }, { status: 500 });
-
 
   const upstream = new URL("/api/admin/users/", API_BASE);
   const body = await req.text();
