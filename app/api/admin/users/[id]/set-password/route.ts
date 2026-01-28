@@ -1,12 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"; // ✅ Luôn dùng NextRequest
 import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
 
+// --- Helpers ---
+
 function forward(res: Response) {
   const contentType = res.headers.get("content-type") ?? "application/json";
-  return new NextResponse(res.body, { status: res.status, headers: { "content-type": contentType } });
+  return new NextResponse(res.body, { 
+    status: res.status, 
+    headers: { "content-type": contentType } 
+  });
 }
 
 async function getCookie(name: string) {
@@ -59,11 +64,17 @@ async function authedFetch(url: string, init?: RequestInit) {
   return res;
 }
 
-// Next 16: params là Promise
-type Ctx = { params: Promise<{ id: string }> };
+// --- Route Handler ---
 
-export async function POST(req: Request, ctx: Ctx) {
-  const { id } = await ctx.params;
+// ✅ Định nghĩa chuẩn cho Next.js 15+
+type Props = {
+  params: Promise<{ id: string }>
+}
+
+export async function POST(req: NextRequest, { params }: Props) {
+  // ✅ Unwrap params
+  const { id } = await params;
+  
   const upstream = new URL(`/api/admin/users/${id}/set-password/`, API_BASE);
   const body = await req.text();
 
