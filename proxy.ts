@@ -86,5 +86,8 @@ export default function proxy(req: NextRequest, event: NextFetchEvent) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /* Loại trừ các đường dẫn sau khỏi Middleware */
+    '/((?!api|_next/static|_next/image|favicon.ico|login|signin).*)',
+  ],
 };
