@@ -25,7 +25,9 @@ SECRET_KEY = 'django-insecure-k1#o&^+xdb5-7vcl5t3hz4$+44mq_oxvnf!h8(11x%+u3m-ud$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "meteo-app-coral.vercel.app",
+]
 
 
 # Application definition
@@ -57,6 +59,11 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+     "https://meteo-app-coral.vercel.app",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://meteo-app-coral.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
