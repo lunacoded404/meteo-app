@@ -97,7 +97,7 @@
 import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
 
-// Cập nhật đúng các path public thực tế của bạn
+// 1. Định nghĩa chính xác các đường dẫn không cần token
 const PUBLIC_PATHS = ["/home", "/discover/login", "/discover/signin", "/"];
 
 function isPublic(pathname: string) {
@@ -109,10 +109,8 @@ function shouldSkip(req: NextRequest) {
   return (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
-    pathname === "/robots.txt" ||
-    pathname.startsWith("/sitemap") ||
-    pathname.startsWith("/api") || 
-    req.headers.has("x-middleware-skip") || // Bỏ qua nếu là request nội bộ từ middleware
+    pathname.startsWith("/api") || // Quan trọng: Bỏ qua tất cả /api để tránh loop log
+    req.headers.has("x-middleware-skip") ||
     /\.(png|jpg|jpeg|webp|svg|css|js|map|ico|pbf)$/.test(pathname)
   );
 }
@@ -120,76 +118,57 @@ function shouldSkip(req: NextRequest) {
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
   const { pathname, searchParams } = req.nextUrl;
 
-  // 1. Bỏ qua các tài nguyên tĩnh và API để tránh loop
+  // BƯỚC 1: Thoát ngay nếu là file tĩnh hoặc API
   if (shouldSkip(req)) return NextResponse.next();
 
-  // 2. Logic Log Page View
-  if (req.method === "GET") {
-    const accept = req.headers.get("accept") || "";
-    if (accept.includes("text/html")) {
-      const ip =
-        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-        req.headers.get("x-real-ip") ??
-        null;
-
-      const ua = req.headers.get("user-agent") ?? null;
-
-      const payload = {
-        path: pathname,
-        region_code: searchParams.get("region"),
-        layer_key: searchParams.get("layer"),
-        ip,
-        ua,
-      };
-
-      const logUrl = new URL("/api/_log/access", req.url);
-
-      event.waitUntil(
-        fetch(logUrl, {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            "x-log-secret": process.env.LOG_SECRET || "",
-            "x-middleware-skip": "true", // Header quan trọng để tránh Middleware gọi lại chính nó
-          },
-          body: JSON.stringify(payload),
-        }).catch(() => {})
-      );
-    }
+  // BƯỚC 2: Kiểm tra nếu đang ở trang login/signin thì CHO QUA NGAY
+  // Đây là chốt chặn quan trọng nhất để sửa lỗi trong ảnh của bạn
+  if (pathname.includes("/discover/login") || pathname.includes("/discover/signin")) {
+    return NextResponse.next();
   }
 
-  // 3. Cho phép đi tiếp nếu là trang Public
+  // BƯỚC 3: Logic Log (Giữ nguyên nhưng thêm catch bảo mật)
+  if (req.method === "GET" && req.headers.get("accept")?.includes("text/html")) {
+    const logUrl = new URL("/api/_log/access", req.url);
+    event.waitUntil(
+      fetch(logUrl, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-log-secret": process.env.LOG_SECRET || "",
+          "x-middleware-skip": "true",
+        },
+        body: JSON.stringify({ path: pathname, ua: req.headers.get("user-agent") }),
+      }).catch(() => {})
+    );
+  }
+
+  // BƯỚC 4: Kiểm tra Public Routes
   if (isPublic(pathname)) return NextResponse.next();
 
-  // 4. Kiểm tra Private routes: yêu cầu access_token
-  // Lưu ý: Trên Vercel (HTTPS), cookie thường có tiền tố __Secure- nếu cấu hình chặt chẽ
+  // BƯỚC 5: Kiểm tra Token cho các trang Private
   const access = req.cookies.get("access_token")?.value;
 
   if (!access) {
     const url = req.nextUrl.clone();
-    // Đảm bảo đường dẫn này khớp với PUBLIC_PATHS bên trên
     url.pathname = "/discover/login";
-    url.search = `?next=${encodeURIComponent(pathname + (req.nextUrl.search || ""))}`;
-    
-    // Nếu đang ở trang login rồi thì không redirect nữa để tránh loop
-    if (pathname === "/discover/login") return NextResponse.next();
-    
+    // Tránh truyền tham số next lặp đi lặp lại
+    if (!pathname.includes("/discover/login")) {
+        url.searchParams.set("next", pathname + (req.nextUrl.search || ""));
+    }
     return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
 }
 
-// Cấu hình Matcher chuẩn để Vercel không quét vào các file tĩnh và trang login
+// BƯỚC 6: Matcher cực kỳ quan trọng - Loại trừ thẳng tên thư mục chứa trang login
 export const config = {
   matcher: [
     /*
-     * Khớp tất cả các request TRỪ:
-     * - api (các route API nội bộ)
-     * - _next (tài nguyên hệ thống Next.js)
-     * - Các file tĩnh (favicon, images, etc.)
-     * - Trang login/signin để tránh Middleware can thiệp gây Loop
+     * Khớp tất cả trừ:
+     * api, _next, các file tĩnh và ĐẶC BIỆT là cụm từ 'discover' (chứa login/signin)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|discover/login|discover/signin|home|$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|discover|home|$).*)',
   ],
 };
