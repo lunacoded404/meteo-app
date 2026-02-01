@@ -1,37 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Weather App 
 
-## Getting Started
+**Weather App** là một ứng dụng WebGIS hiển thị thông tin **thời tiết** của Việt Nam, được xây dựng với **Next.js** và các thư viện bản đồ hiện đại.  
+Dự án hướng tới việc trực quan hóa dữ liệu khí tượng trên nền bản đồ, phục vụ học tập, nghiên cứu và demo WebGIS.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🔗 Demo
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+👉 Live demo: https://meteo-app-coral.vercel.app/
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+👉 GitHub repo: https://github.com/lunacoded404/meteo-app
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Tính năng chính
 
-To learn more about Next.js, take a look at the following resources:
+- Hiển thị **bản đồ tương tác (WebGIS)**
+- Lấy dữ liệu thời tiết theo **tỉnh thành**
+- Hiển thị các thông tin khí tượng cơ bản:
+  - Nhiệt độ
+  - Độ ẩm
+  - Gió
+  - Mây
+  - Mưa
+- 🔎 Tìm kiếm và thay đổi khu vực hiển thị
+- 📱 Giao diện **responsive**, thân thiện với người dùng
+- ⚡ Tối ưu hiệu năng với Next.js
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Công nghệ sử dụng
 
-## Deploy on Vercel
+| Thành phần | Công nghệ |
+|-----------|----------|
+| Frontend | Next.js (React) |
+| Styling | CSS / Tailwind CSS |
+| Bản đồ | Leaflet / React-Leaflet |
+| API thời tiết | Open-Meteo |
+| Backend | Python Django |
+| Deploy | Vercel |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-"# meteo-app" 
+## 📁 Cấu trúc thư mục
+
