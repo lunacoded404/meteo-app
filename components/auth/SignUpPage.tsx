@@ -43,7 +43,8 @@ export default function SignUpPage() {
     try {
       setLoading(true);
 
-    const res = await fetch(`/api/auth/register`, {
+    // const res = await fetch(`/api/auth/register`,
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/auth/register/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password }),

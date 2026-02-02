@@ -25,8 +25,10 @@ SECRET_KEY = 'django-insecure-k1#o&^+xdb5-7vcl5t3hz4$+44mq_oxvnf!h8(11x%+u3m-ud$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# settings.py
 ALLOWED_HOSTS = [
     "meteo-app-coral.vercel.app",
+    ".vercel.app", 
     "localhost",
     "127.0.0.1",
 ]
