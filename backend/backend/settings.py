@@ -11,29 +11,35 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-k1#o&^+xdb5-7vcl5t3hz4$+44mq_oxvnf!h8(11x%+u3m-ud$'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = [
-    'meteo-app-coral.vercel.app',
-    '.railway.app', # Cho phép tất cả subdomain của railway
-    'localhost',
-    '127.0.0.1',
-]
 
 
-# Application definition
+# ALLOWED_HOSTS = [
+#     'meteo-app-coral.vercel.app',
+#     '.railway.app', # Cho phép tất cả subdomain của railway
+#     'localhost',
+#     '127.0.0.1',
+# ]
+
+
+import os, dj_database_url
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret")
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
+
+db_conf = dj_database_url.config(conn_max_age=600, ssl_require=True)
+if not db_conf:
+    raise ImproperlyConfigured("DATABASE_URL env var is missing")
+DATABASES = {"default": db_conf}
+
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS","localhost,127.0.0.1").split(",") if h.strip()]
+
+
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -51,6 +57,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -106,19 +113,21 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": "aws-1-ap-southeast-1.pooler.supabase.com",   
-        "PORT": 6543,                  
-        "NAME": "postgres",           
-        "USER": "postgres.wxqtyismawdnnmmrtwfa",
-        "PASSWORD": "weatherapp123...",
-        "OPTIONS": {
-            "sslmode": "require",
-        },
-    }
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "HOST": "aws-1-ap-southeast-1.pooler.supabase.com",   
+#         "PORT": 6543,                  
+#         "NAME": "postgres",           
+#         "USER": "postgres.wxqtyismawdnnmmrtwfa",
+#         "PASSWORD": "weatherapp123...",
+#         "OPTIONS": {
+#             "sslmode": "require",
+#         },
+#     }
+# }
+
+
 
 
 
