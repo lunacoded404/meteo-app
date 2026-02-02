@@ -93,82 +93,83 @@
 // };
 
 
-// proxy.ts (root)
+// middleware.ts
 import { NextResponse } from "next/server";
-import type { NextFetchEvent, NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
-// 1. Định nghĩa chính xác các đường dẫn không cần token
-const PUBLIC_PATHS = ["/home", "/discover/login", "/discover/signin", "/"];
-
-function isPublic(pathname: string) {
-  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
-}
-
-function shouldSkip(req: NextRequest) {
-  const pathname = req.nextUrl.pathname;
-  return (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.startsWith("/api") || // Quan trọng: Bỏ qua tất cả /api để tránh loop log
-    req.headers.has("x-middleware-skip") ||
-    /\.(png|jpg|jpeg|webp|svg|css|js|map|ico|pbf)$/.test(pathname)
-  );
-}
-
-export default function proxy(req: NextRequest, event: NextFetchEvent) {
+export function middleware(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
 
-  // BƯỚC 1: Thoát ngay nếu là file tĩnh hoặc API
-  if (shouldSkip(req)) return NextResponse.next();
-
-  // BƯỚC 2: Kiểm tra nếu đang ở trang login/signin thì CHO QUA NGAY
-  // Đây là chốt chặn quan trọng nhất để sửa lỗi trong ảnh của bạn
-  if (pathname.includes("/discover/login") || pathname.includes("/discover/signin")) {
+  // 1. SKIP LIST: Bỏ qua các file tĩnh và API routes để tránh vòng lặp
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") || // Quan trọng: Để API Login/Register không bị chặn
+    pathname.includes(".") ||      // Bỏ qua favicon, ảnh, v.v.
+    pathname === "/robots.txt"
+  ) {
     return NextResponse.next();
   }
 
-  // BƯỚC 3: Logic Log (Giữ nguyên nhưng thêm catch bảo mật)
-  if (req.method === "GET" && req.headers.get("accept")?.includes("text/html")) {
-    const logUrl = new URL("/api/_log/access", req.url);
-    event.waitUntil(
-      fetch(logUrl, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-log-secret": process.env.LOG_SECRET || "",
-          "x-middleware-skip": "true",
-        },
-        body: JSON.stringify({ path: pathname, ua: req.headers.get("user-agent") }),
-      }).catch(() => {})
-    );
+  // 2. PUBLIC PATHS: Các trang không cần đăng nhập
+  const PUBLIC_PATHS = ["/", "/home", "/discover/login", "/discover/signin"];
+  const isPublicPage = PUBLIC_PATHS.some((p) => pathname === p);
+
+  // 3. AUTH CHECK: Kiểm tra cookie access_token
+  const accessToken = req.cookies.get("access_token")?.value;
+
+  // Trường hợp: Đã đăng nhập mà cố tình vào trang Login/Signin
+  if (accessToken && (pathname === "/discover/login" || pathname === "/discover/signin")) {
+    return NextResponse.redirect(new URL("/discover/overview", req.url));
   }
 
-  // BƯỚC 4: Kiểm tra Public Routes
-  if (isPublic(pathname)) return NextResponse.next();
-
-  // BƯỚC 5: Kiểm tra Token cho các trang Private
-  const access = req.cookies.get("access_token")?.value;
-
-  if (!access) {
+  // Trường hợp: Chưa đăng nhập mà vào trang Private
+  if (!accessToken && !isPublicPage) {
     const url = req.nextUrl.clone();
     url.pathname = "/discover/login";
-    // Tránh truyền tham số next lặp đi lặp lại
-    if (!pathname.includes("/discover/login")) {
-        url.searchParams.set("next", pathname + (req.nextUrl.search || ""));
-    }
+    // Lưu lại trang đang định vào để sau khi login xong quay lại (next parameter)
+    url.searchParams.set("next", pathname + (req.nextUrl.search || ""));
     return NextResponse.redirect(url);
+  }
+
+  // 4. LOGGING (Optional - Giữ lại logic của bạn nhưng tối ưu hơn)
+  // Chỉ log view khi user truy cập các trang HTML thực sự
+  if (req.method === "GET" && !pathname.startsWith("/api")) {
+    const accept = req.headers.get("accept") || "";
+    if (accept.includes("text/html")) {
+      // Thực hiện gọi API log ẩn (background)
+      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+      const logUrl = new URL("/api/_log/access", req.url);
+      
+      // Không dùng await để tránh làm chậm tốc độ load trang của user
+      fetch(logUrl, {
+        method: "POST",
+        headers: { 
+          "content-type": "application/json",
+          "x-log-secret": process.env.LOG_SECRET || "" 
+        },
+        body: JSON.stringify({
+          path: pathname,
+          ip: ip,
+          ua: req.headers.get("user-agent"),
+        }),
+      }).catch(() => {});
+    }
   }
 
   return NextResponse.next();
 }
 
-// BƯỚC 6: Matcher cực kỳ quan trọng - Loại trừ thẳng tên thư mục chứa trang login
+// 5. MATCHER CONFIG: Định nghĩa những path nào middleware sẽ chạy qua
 export const config = {
   matcher: [
     /*
-     * Khớp tất cả trừ:
-     * api, _next, các file tĩnh và ĐẶC BIỆT là cụm từ 'discover' (chứa login/signin)
+     * Match tất cả trừ:
+     * 1. api (nếu bạn muốn middleware không xử lý api chút nào)
+     * 2. _next/static (static files)
+     * 3. _next/image (image optimization files)
+     * 4. favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|discover|home|$).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
+

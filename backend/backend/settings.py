@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     "meteo-app-coral.vercel.app",
+    "localhost",
+    "127.0.0.1",
 ]
 
 
@@ -59,7 +61,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-     "https://meteo-app-coral.vercel.app",
+    "https://meteo-app-coral.vercel.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
