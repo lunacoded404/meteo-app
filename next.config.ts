@@ -1,13 +1,17 @@
+// next.config.ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    experimental: {
-      turbopackFileSystemCacheForDev: true,
-  }
-};
+  // Giữ lại cấu hình experimental của bạn
+  experimental: {
+    turbopackFileSystemCacheForDev: true,
+  },
+  
+  trailingSlash: true,
 
-module.exports = {
-  trailingSlash: false, 
-}
+  env: {
+    DJANGO_API_BASE: process.env.DJANGO_API_BASE,
+  },
+};
 
 export default nextConfig;

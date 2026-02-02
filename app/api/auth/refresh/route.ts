@@ -12,7 +12,7 @@ export async function POST() {
     return NextResponse.json({ detail: "Missing refresh_token" }, { status: 401 });
   }
 
-  // ✅ Django SimpleJWT thường là /api/token/refresh/
+
   const url = `${BACKEND}/api/token/refresh/`;
 
   const r = await fetch(url, {
