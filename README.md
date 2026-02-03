@@ -3,8 +3,8 @@
 **Weather App** là một ứng dụng WebGIS hiện đại được xây dựng để cung cấp dữ liệu khí tượng trực quan và dự báo thời tiết chính xác. Dự án tận dụng sức mạnh của **Django REST Framework** ở phía backend và **Next.js** ở frontend để mang lại trải nghiệm người dùng nhanh chóng và mượt mà.
 
 ## 🔗 Liên kết Dự án
-* **Website (Production):** [https://meteo-app-frontend.vercel.app](https://meteo-app-frontend.vercel.app)
-* **API Endpoint:** [https://meteo-app-production.up.railway.app/api/](https://meteo-app-production.up.railway.app/api/)
+* **Website (Production):** [https://meteo-app-coral.vercel.app/](https://meteo-app-coral.vercel.app/)
+* **API Endpoint:** [https://meteo-backend-production-150f.up.railway.app/api/](https://meteo-backend-production-150f.up.railway.app/api/)
 
 ## 🚀 Tính năng chính
 * **Bản đồ thời tiết:** Hiển thị vị trí và dữ liệu từ các trạm khí tượng (theo tỉnh thành) trên nền bản đồ tương tác.
