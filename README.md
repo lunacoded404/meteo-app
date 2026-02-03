@@ -43,6 +43,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 ### 2. Cấu hình Frontend (Next.js)
+```bash
 # Truy cập thư mục frontend
 
 # Cài đặt dependencies
@@ -50,3 +51,7 @@ npm install
 
 # Chạy ứng dụng ở chế độ phát triển
 npm run dev
+```
+> [!IMPORTANT]
+> - **Username:** `admin`
+> - **Password:** `admin123` 
