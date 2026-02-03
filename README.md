@@ -4,7 +4,6 @@
 
 ## 🔗 Liên kết Dự án
 * **Website (Production):** [https://meteo-app-coral.vercel.app/](https://meteo-app-coral.vercel.app/)
-* **API Endpoint:** [https://meteo-backend-production-150f.up.railway.app/api/](https://meteo-backend-production-150f.up.railway.app/api/)
 
 ## 🚀 Tính năng chính
 * **Bản đồ thời tiết:** Hiển thị vị trí và dữ liệu từ các trạm khí tượng (theo tỉnh thành) trên nền bản đồ tương tác.
