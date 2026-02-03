@@ -53,5 +53,6 @@ npm install
 npm run dev
 ```
 > [!IMPORTANT]
+> **Tài khoản admin:
 > - **Username:** `admin`
 > - **Password:** `admin123` 
