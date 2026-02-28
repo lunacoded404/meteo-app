@@ -1,6 +1,4 @@
 "use client";
-
-import React from "react";
 import PopupCard, { Stat } from "../PopupCard";
 import { fmt } from "../helpers/popupUtils";
 import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
@@ -12,7 +10,7 @@ export type ProvinceCloud = {
   current: {
     time: string | null;
     cloud_cover_percent: number | null;
-    visibility_m?: number | null; // ✅ optional
+    visibility_m?: number | null; 
   };
 };
 
@@ -64,7 +62,7 @@ export default function CloudPopup({ data, loading, error, regionName }: CloudPo
   const timeText = `Cập nhật lúc: ${formatDateTimeVN(data?.current?.time)}`;
   const desc = cloud == null ? "Chưa có dữ liệu mây hiện tại." : cloudDescriptionVN(cloud);
 
-  const code = data?.province?.code; // ✅ lấy code từ data
+  const code = data?.province?.code; 
 
 
   return (

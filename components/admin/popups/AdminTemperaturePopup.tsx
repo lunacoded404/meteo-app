@@ -22,7 +22,7 @@ export type TemperaturePopupProps = {
   data: ProvinceWeather | null;
   loading: boolean;
   error: string | null;
-  regionName?: string; // ✅ fallback name từ province_index
+  regionName?: string; 
 };
 
 const pickToday = (all: DailyPoint[]) => {
@@ -68,7 +68,6 @@ export default function AdminTemperaturePopup ({ data, loading, error, regionNam
       return pickToday(all);
     }, [data]);
   
-    // ✅ icon theo nhiệt độ cao/thấp (giữ như cũ)
     const iconSrc = currentTemp != null && currentTemp >= 28 ? "/high_temp.png" : "/short_temp.png";
   
     const currentDesc =
@@ -106,7 +105,7 @@ export default function AdminTemperaturePopup ({ data, loading, error, regionNam
           </div>
         </div>
       )}
-    {/* ✅ nút export chỉ admin */}
+
       {data?.province?.code ? (
         <div className="mt-3">
           <AdminExportPdfButton provinceCode={data.province.code} />

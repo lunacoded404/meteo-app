@@ -1,4 +1,3 @@
-// src/components/discover/overview/trends/TrendsCard.tsx
 "use client";
 
 import React, { useMemo } from "react";
@@ -17,10 +16,8 @@ export function pill(active: boolean) {
 }
 
 export function fmtXAxisLabel(v: any) {
-  // "YYYY-MM-DD" -> "MM-DD"
   if (typeof v === "string") return v.length >= 10 ? v.slice(5, 10) : v;
 
-  // timestamp/number
   if (typeof v === "number") {
     const d = new Date(v);
     if (!Number.isNaN(d.getTime())) {
@@ -52,7 +49,6 @@ export function fmtVal(v: any) {
   return String(v);
 }
 
-// ✅ Nền tối để chữ trắng rõ
 const selectCls =
   "rounded-xl bg-slate-900/80 border border-white/15 px-3 py-2 text-[13px] text-white outline-none " +
   "focus:ring-2 focus:ring-white/20";
@@ -82,11 +78,7 @@ export default function TrendsCard({
   loading: boolean;
   err: string | null;
   setMetric: (m: MetricKey) => void;
-
-  // ✅ Dropdown 1: "12m" | year (2025..)
   setPeriod: (p: PeriodKey) => void;
-
-  // ✅ Dropdown 2: month
   setMonthFilter: (m: number | "all") => void;
 }) {
   const periodIs12m = vm.period === "12m";
@@ -109,7 +101,6 @@ export default function TrendsCard({
       return `${title}<br/>${lines}`;
     };
 
-    // ✅ Khi xem theo năm và lọc tháng => show full date
     const showFullDate = !periodIs12m && vm.monthFilter !== "all";
 
     const base: any = {
@@ -247,12 +238,10 @@ export default function TrendsCard({
     return base;
   }, [chartData, vm.metric, vm.period, vm.monthFilter, periodIs12m]);
 
-  // ✅ Summary: 12m dùng rows_12m, còn lại dùng rows_all (bạn có thể đổi tùy ý)
   const rows = periodIs12m ? vm.summaryRows_12m : vm.summaryRows_all;
 
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,0.35)] overflow-hidden">
-      {/* Header */}
       <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <div className="text-white text-[18px] font-semibold">Xu hướng thời tiết</div>
@@ -261,9 +250,7 @@ export default function TrendsCard({
           </div>
         </div>
 
-        {/* ✅ Dropdown giống MSN Weather: Period + Month */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Period */}
           <select
             value={vm.period === "12m" ? "12m" : String(vm.period)}
             onChange={(e) => {
@@ -280,7 +267,6 @@ export default function TrendsCard({
             ))}
           </select>
 
-          {/* Month (chỉ bật khi chọn năm) */}
           <select
             value={periodIs12m ? "all" : String(vm.monthFilter)}
             onChange={(e) => setMonthFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
@@ -297,7 +283,6 @@ export default function TrendsCard({
         </div>
       </div>
 
-      {/* Tabs + Warning */}
       <div className="px-5 pb-4">
         <div className="flex flex-wrap gap-2">
           <button className={pill(vm.metric === "temperature")} onClick={() => setMetric("temperature")} type="button">
@@ -321,7 +306,6 @@ export default function TrendsCard({
         ) : null}
       </div>
 
-      {/* Chart + Tables */}
       <div className="px-5 pb-5">
         {loading ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-white/80 text-[13px]">
@@ -338,7 +322,6 @@ export default function TrendsCard({
         )}
 
         <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Climate info */}
           <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 text-white/85 text-[13px] font-semibold">
               Thông tin khí hậu
@@ -366,7 +349,6 @@ export default function TrendsCard({
             ))}
           </div>
 
-          {/* Daily summary */}
           <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 text-white/85 text-[13px] font-semibold">
               Tổng hợp theo ngày 

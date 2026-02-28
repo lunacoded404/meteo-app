@@ -1,5 +1,4 @@
 import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
-import { CloudPopupProps } from "./AdminCloudPopup";
 import PopupCard, { Stat } from "@/components/PopupCard";
 import { clamp, fmt } from "@/components/helpers/popupUtils";
 
@@ -110,7 +109,7 @@ export default function AdminRainPopup ({ data, loading, error, regionName }: Ra
           </div>
         </div>
       )}
-    {/* ✅ nút export chỉ admin */}
+
       {data?.province?.code ? (
         <div className="mt-3">
           <AdminExportPdfButton provinceCode={data.province.code} />

@@ -98,7 +98,7 @@ export default function AdminHumidityPopup ({ data, loading, error, regionName }
           </div>
         </div>
       )}
-    {/* ✅ nút export chỉ admin */}
+    
       {data?.province?.code ? (
         <div className="mt-3">
           <AdminExportPdfButton provinceCode={data.province.code} />

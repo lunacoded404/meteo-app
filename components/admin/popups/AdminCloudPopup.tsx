@@ -9,7 +9,7 @@ export type ProvinceCloud = {
   current: {
     time: string | null;
     cloud_cover_percent: number | null;
-    visibility_m?: number | null; // ✅ optional
+    visibility_m?: number | null;
   };
 };
 
@@ -93,7 +93,7 @@ export default function AdminCloudPopup({ data, loading, error, regionName }: Cl
           </div>
         </div>
       )}
-            {/* ✅ nút export chỉ admin */}
+      
       {data?.province?.code ? (
         <div className="mt-3">
           <AdminExportPdfButton provinceCode={data.province.code} />

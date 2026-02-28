@@ -50,7 +50,6 @@ export default function OverviewFloatingPanel({
 
   const [active, setActive] = useState(defaultActiveId);
 
-  // ✅ Active theo section visible (giống Hourly)
   useEffect(() => {
     const ids = navItems.map((x) => x.id);
 
@@ -65,7 +64,6 @@ export default function OverviewFloatingPanel({
 
         setActive(id);
 
-        // sync hash (không tạo history mới)
         if (window.location.hash !== `#${id}`) {
           window.history.replaceState(null, "", `#${id}`);
         }
@@ -85,7 +83,6 @@ export default function OverviewFloatingPanel({
     return () => obs.disconnect();
   }, [navItems, activeOffsetPx]);
 
-  // ✅ jumpTo giống Hourly
   const jumpTo = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     const el = document.getElementById(id);

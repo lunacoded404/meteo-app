@@ -13,12 +13,9 @@ function safeN(v: any) {
   return Number.isFinite(n) ? n : null;
 }
 
-// ✅ deg -> tên hướng gió tiếng Việt + độ
 function degToVN(deg?: number | null) {
   if (deg == null || Number.isNaN(deg)) return "—";
   const d = ((deg % 360) + 360) % 360;
-
-  // 16 hướng (phù hợp dominant 16-sector)
   const dirs = [
     "Bắc",
     "Bắc Đông Bắc",
@@ -41,7 +38,6 @@ function degToVN(deg?: number | null) {
   return `${dirs[idx]} (${Math.round(d)}°)`;
 }
 
-// ✅ map label EN (N/NNE/NE/...) -> VN
 function labelENToVN(label?: string | null) {
   if (!label) return null;
   const m: Record<string, string> = {
@@ -66,7 +62,6 @@ function labelENToVN(label?: string | null) {
   return m[key] ?? null;
 }
 
-// ✅ ưu tiên label (nếu có) nhưng luôn hiển thị tiếng Việt + (°)
 function normalizeWindVN(p: DailyPoint) {
   const deg = safeN(p.wind_direction_dominant_deg);
   const vnFromLabel = labelENToVN(p.wind_direction_dominant_label ?? null);
@@ -119,7 +114,6 @@ export default function Forecast16Drawer({
 }) {
   const [showTable, setShowTable] = useState(false);
 
-  // ✅ LOCK scroll page khi drawer open (chỉ scroll trong drawer)
   useEffect(() => {
     if (!open) return;
 
@@ -129,7 +123,7 @@ export default function Forecast16Drawer({
 
     const sbw = getScrollbarWidth();
     body.style.overflow = "hidden";
-    // ✅ tránh giật layout khi mất scrollbar
+
     if (sbw > 0) body.style.paddingRight = `${sbw}px`;
 
     return () => {
@@ -228,7 +222,6 @@ export default function Forecast16Drawer({
 
   return (
     <div className="fixed inset-0 z-[90]">
-      {/* overlay */}
       <button
         type="button"
         className="absolute inset-0 bg-black/60"
@@ -236,9 +229,7 @@ export default function Forecast16Drawer({
         aria-label="Close 16-day forecast"
       />
 
-      {/* panel */}
       <div className="absolute inset-x-0 top-[96px] mx-auto w-[min(1100px,calc(100vw-24px))] rounded-3xl border border-white/10 bg-slate-950/80 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
-        {/* header */}
         <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
           <div className="min-w-0">
             <div className="text-[14px] font-semibold text-white truncate">Dự báo 16 ngày</div>
@@ -267,15 +258,11 @@ export default function Forecast16Drawer({
             </button>
           </div>
         </div>
-
-        {/* body: ✅ chỉ scroll trong drawer */}
         <div
           className="max-h-[calc(100vh-140px)] overflow-auto p-4 overscroll-contain"
-          // ✅ ngăn “scroll xuyên” trên iOS/touch
           onWheelCapture={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
         >
-          {/* chart */}
           <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
             <div className="text-[13px] font-semibold text-white">Tổng quan 16 ngày</div>
             <div className="mt-0.5 text-[12px] text-slate-300">Nhiệt độ (°C) • Lượng mưa tích lũy (mm) • Xác suất mưa (%)</div>
@@ -284,7 +271,6 @@ export default function Forecast16Drawer({
             </div>
           </div>
 
-          {/* table */}
           {showTable ? (
             <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
               <div className="border-b border-white/10 px-4 py-2 text-[13px] font-semibold text-white/90">Bảng chi tiết 16 ngày</div>

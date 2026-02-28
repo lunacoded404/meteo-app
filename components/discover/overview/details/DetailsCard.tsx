@@ -1,4 +1,3 @@
-// src/components/discover/overview/details/DetailsCard.tsx
 "use client";
 
 import React from "react";
@@ -137,9 +136,6 @@ export default function DetailsCard({
             {Number.isFinite(rain24sum) ? `${rain24sum.toFixed(1)} mm` : "—"}
           </div>
           <div className="mt-2 text-white/65 text-[12px]">Tổng lượng mưa dự kiến trong 24h tới</div>
-          {/* <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-white/75 text-[12px]">
-            Hiện tại: {current.rain_mm == null ? "—" : `${current.rain_mm.toFixed(1)} mm`}
-          </div> */}
         </CardShell>
 
         {/* Wind */}

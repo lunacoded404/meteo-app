@@ -1,4 +1,3 @@
-// src/components/CardNav.tsx
 "use client";
 
 import React, { useLayoutEffect, useRef, useState } from "react";
@@ -47,7 +46,7 @@ const CardNav: React.FC<CardNavProps> = ({
     if (!navEl) return 260;
 
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
-    const viewportCap = Math.max(320, window.innerHeight - 24); // chừa 24px để không chạm mép
+    const viewportCap = Math.max(320, window.innerHeight - 24); 
 
     if (isMobile) {
       const contentEl = navEl.querySelector(".card-nav-content") as HTMLElement | null;
@@ -101,7 +100,6 @@ const CardNav: React.FC<CardNavProps> = ({
       tl?.kill();
       tlRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ease, items]);
 
   useLayoutEffect(() => {
@@ -127,7 +125,6 @@ const CardNav: React.FC<CardNavProps> = ({
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpanded]);
 
   const toggleMenu = () => {
@@ -151,7 +148,6 @@ const CardNav: React.FC<CardNavProps> = ({
 
   return (
     <div className={`card-nav-container w-full ${className} relative`}>
-      {/* ✅ AccountMenu sibling của <nav> để dropdown không bị overflow-hidden cắt */}
       <div className="absolute right-2 sm:right-3 top-0 z-[200] pointer-events-auto h-[60px] flex items-center">
         <AccountMenu />
       </div>
@@ -161,7 +157,6 @@ const CardNav: React.FC<CardNavProps> = ({
         className={`card-nav ${isExpanded ? "open" : ""} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden will-change-[height]`}
         style={{ backgroundColor: baseColor }}
       >
-        {/* ✅ TOP BAR: grid 3 cột để mobile không đè nhau */}
         <div
           className="
             card-nav-top absolute inset-x-0 top-0 h-[60px] z-[2]
@@ -172,7 +167,6 @@ const CardNav: React.FC<CardNavProps> = ({
             px-2 sm:px-3
           "
         >
-          {/* Left: Hamburger */}
           <div className="flex items-center justify-center">
             <div
               className={`hamburger-menu ${isHamburgerOpen ? "open" : ""} group h-full flex flex-col items-center justify-center cursor-pointer gap-[6px]`}
@@ -195,16 +189,12 @@ const CardNav: React.FC<CardNavProps> = ({
             </div>
           </div>
 
-          {/* Center: Logo */}
           <div className="logo-container flex items-center justify-center min-w-0">
             {typeof logo === "string" ? <img src={logo} alt={logoAlt} className="logo h-[28px]" /> : logo}
           </div>
-
-          {/* Right: spacer để logo luôn “giữa”, AccountMenu đang absolute */}
           <div />
         </div>
 
-        {/* Content */}
         <div
           className={`
             card-nav-content absolute left-0 right-0 top-[60px] bottom-0 p-2 z-[1]

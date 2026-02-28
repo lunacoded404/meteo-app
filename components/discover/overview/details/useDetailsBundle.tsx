@@ -1,4 +1,3 @@
-// src/components/discover/overview/details/useDetailsBundle.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -37,13 +36,11 @@ export function useDetailsBundle() {
   const [err, setErr] = useState<string | null>(null);
   const [bundle, setBundle] = useState<BundlePayload | null>(null);
 
-  // init localStorage
   useEffect(() => {
     const saved = readSavedRegion();
     if (saved) setRegion(saved);
   }, []);
 
-  // listen event from RegionSearch
   useEffect(() => {
     const handler = (e: Event) => {
       const ce = e as CustomEvent<RegionEventDetail>;
@@ -60,7 +57,6 @@ export function useDetailsBundle() {
     return () => window.removeEventListener("meteo:region", handler as any);
   }, []);
 
-  // fetch bundle
   useEffect(() => {
     let alive = true;
 

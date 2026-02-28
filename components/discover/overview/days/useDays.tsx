@@ -1,4 +1,3 @@
-// src/components/discover/overview/days/useDays.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -56,18 +55,14 @@ export function useDays() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [days, setDays] = useState<DailyForecastPoint[]>([]);
-
-  // ✅ monthKey sẽ tự sync theo dữ liệu forecast (1 hoặc 2 tháng)
   const [monthKey, setMonthKey] = useState<string>(() => ymd(new Date()).slice(0, 7));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  // init region from storage
   useEffect(() => {
     const saved = readSavedRegion();
     if (saved) setRegion(saved);
   }, []);
 
-  // listen RegionSearch event
   useEffect(() => {
     const handler = (e: Event) => {
       const ce = e as CustomEvent<RegionEventDetail>;
@@ -83,7 +78,6 @@ export function useDays() {
     return () => window.removeEventListener("meteo:region", handler as any);
   }, []);
 
-  // fetch 16-day forecast
   useEffect(() => {
     let alive = true;
 
@@ -108,7 +102,6 @@ export function useDays() {
         if (!alive) return;
         setDays(built);
 
-        // ✅ default: chọn ngày đầu tiên trong forecast
         if (built.length) {
           const mk = monthKeyOf(built[0].date);
           setMonthKey(mk);
@@ -132,10 +125,8 @@ export function useDays() {
     };
   }, [region.lat, region.lon]);
 
-  // ✅ Tabs chỉ gồm các tháng có trong 16 ngày (thường 1–2 tháng)
   const monthTabs = useMemo(() => buildMonthTabsFromDays(days), [days]);
 
-  // ✅ Nếu user đang đứng ở monthKey không còn trong tabs -> kéo về tháng đầu
   useEffect(() => {
     if (!monthTabs.length) return;
 
@@ -145,7 +136,6 @@ export function useDays() {
     }
   }, [monthTabs, monthKey]);
 
-  // ✅ Nếu đổi tháng tab mà selectedDate không thuộc tháng đó -> chọn ngày đầu tiên của tháng
   useEffect(() => {
     if (!days.length) return;
 

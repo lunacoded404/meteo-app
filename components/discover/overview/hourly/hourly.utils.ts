@@ -1,5 +1,3 @@
-// components/discover/overview/hourly/hourly.utils.ts
-
 export function cx(...cls: Array<string | false | null | undefined>) {
   return cls.filter(Boolean).join(" ");
 }

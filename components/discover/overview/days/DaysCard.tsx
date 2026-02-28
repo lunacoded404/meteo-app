@@ -1,4 +1,3 @@
-// src/components/discover/overview/days/DaysCard.tsx
 "use client";
 
 import React, { useMemo } from "react";
@@ -67,7 +66,6 @@ function getMonthBounds(monthKey: string) {
   return { y, m, start, daysInMonth: end.getDate() };
 }
 
-// Monday-first index (Mon=0..Sun=6)
 function mondayIndex(jsDay: number) {
   return (jsDay + 6) % 7;
 }
@@ -114,7 +112,6 @@ export default function DaysCard({
 
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,0.35)] overflow-hidden">
-      {/* Header */}
       <div className="p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <div className="text-white text-[18px] font-semibold">Dự báo 15 ngày</div>
@@ -152,7 +149,6 @@ export default function DaysCard({
         </div>
       </div>
 
-      {/* Month tabs */}
       <div className="px-5 pb-4">
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {vm.monthTabs.map((t) => {
@@ -177,7 +173,6 @@ export default function DaysCard({
         </div>
       </div>
 
-      {/* Content */}
       <div className="px-5 pb-5">
         {loading ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-white/80 text-[13px]">
@@ -189,7 +184,6 @@ export default function DaysCard({
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {/* Calendar */}
             <div className="rounded-2xl border border-white/10 bg-[#0B1220]/30 p-4">
               <div className="grid grid-cols-7 gap-2 text-[11px] text-white/60 pb-2">
                 {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((d) => (
@@ -226,14 +220,12 @@ export default function DaysCard({
                             active && "ring-2 ring-white/25 border-white/20"
                           )}
                         >
-                          {/* day number (top-left) */}
                           <div className="absolute top-2 left-2 text-[12px] font-semibold text-white/85">
                             {c.dayNum}
                           </div>
 
                           {has ? (
                             <div className="h-full flex items-center justify-between gap-2 pt-3">
-                              {/* icon */}
                               <div className="flex-1 grid place-items-center">
                                 <div className="text-white/90">
                                   <span className="[&>svg]:w-9 [&>svg]:h-9 block">
@@ -241,8 +233,7 @@ export default function DaysCard({
                                   </span>
                                 </div>
                               </div>
-
-                              {/* temps (right, stacked) */}
+                              
                               <div className="w-[52px] flex flex-col items-end leading-none pr-1">
                                 <div className="text-[16px] font-semibold text-white">
                                   {dp.tmax == null ? "—" : Math.round(dp.tmax)}°

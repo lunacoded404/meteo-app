@@ -27,7 +27,6 @@ export default function AccountMenu() {
 
   const ref = useRef<HTMLDivElement | null>(null);
 
-  // ✅ Fetch session (1 lần) + refetch khi đổi route (login/logout chuyển trang sẽ cập nhật)
   useEffect(() => {
     let alive = true;
 
@@ -58,7 +57,7 @@ export default function AccountMenu() {
     };
   }, [pathname]);
 
-  // ✅ close khi click outside / ESC
+
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (!ref.current) return;
@@ -92,7 +91,6 @@ export default function AccountMenu() {
     return "Tài khoản";
   }, [loadingSession, session.authenticated, session.username]);
 
-  // ✅ chữ cái đầu trên icon
   const initial = useMemo(() => {
     if (!session.authenticated) return null;
     const u = (session.username || "").trim();
@@ -101,7 +99,6 @@ export default function AccountMenu() {
   }, [session.authenticated, session.username]);
 
   return (
-    // ✅ căn giữa theo chiều dọc thanh Header (cao 60px)
     <div className="relative h-[60px] flex items-center" ref={ref}>
       {/* Trigger */}
       <button

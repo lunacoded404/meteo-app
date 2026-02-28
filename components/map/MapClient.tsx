@@ -1,5 +1,4 @@
 "use client";
-
 import "leaflet/dist/leaflet.css";
 
 import type { LatLngExpression, Map as LeafletMap, LatLng } from "leaflet";
@@ -42,7 +41,6 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 export type WeatherLayerKey = "temp" | "wind" | "rain" | "humidity" | "cloud";
 
-// ✅ map icon name (string từ DB) -> component
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Thermometer,
   Wind,
@@ -53,7 +51,6 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Map: MapIcon,
 };
 
-// ✅ fallback config đúng theo MapClient hiện có
 const LAYER_DEFS: Array<{
   key: WeatherLayerKey;
   fallbackName: string;
@@ -135,7 +132,7 @@ export default function MapClient() {
   const provinceIndex: ProvinceIndexItem[] = useMemo(() => lite, [lite]);
 
   // =========================
-  // ✅ HCM districts
+  // HCM districts
   // =========================
   const [hcmDistricts, setHcmDistricts] = useState<PlaceItem[]>([]);
   useEffect(() => {
@@ -156,7 +153,7 @@ export default function MapClient() {
   }, []);
 
   // =========================
-  // ✅ Kiên Giang places
+  // Kiên Giang places
   // =========================
   const [kgPlaces, setKgPlaces] = useState<PlaceItem[]>([]);
   useEffect(() => {
@@ -176,7 +173,6 @@ export default function MapClient() {
     })();
   }, []);
 
-  // ✅ đưa places vào search
   const hcmIndex: ProvinceIndexItem[] = useMemo(
     () => hcmDistricts.map((d) => ({ code: d.code, name: d.name, centroid: d.centroid })),
     [hcmDistricts]
@@ -191,7 +187,6 @@ export default function MapClient() {
     return [...provinceIndex, ...hcmIndex, ...kgIndex];
   }, [provinceIndex, hcmIndex, kgIndex]);
 
-  // ✅ load layer settings từ DB
   const [layerSettings, setLayerSettings] = useState<Record<WeatherLayerKey, LayerSetting> | null>(
     null
   );
@@ -220,7 +215,6 @@ export default function MapClient() {
     })();
   }, []);
 
-  // ✅ danh sách layer sẽ render theo is_enabled + icon từ DB
   const visibleLayers = useMemo(() => {
     return LAYER_DEFS
       .map((d) => {
@@ -236,17 +230,15 @@ export default function MapClient() {
       .filter((x) => x.enabled);
   }, [layerSettings]);
 
-  // ✅ nếu layer hiện tại bị tắt => tự chuyển sang layer đầu tiên còn bật
   useEffect(() => {
     if (!visibleLayers.length) return;
     if (!visibleLayers.some((x) => x.key === activeLayerKeyRef.current)) {
       setActiveLayerKey(visibleLayers[0].key);
       resetPopup();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleLayers]);
 
-  // ✅ responsive: detect mobile để đổi vị trí overlay + popup size
+
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const apply = () => setIsMobile(window.matchMedia("(max-width: 640px)").matches);
@@ -330,7 +322,6 @@ export default function MapClient() {
     try {
       const safeCode = encodeURIComponent(p.code);
 
-      // ✅ backend sẽ resolve code: tỉnh hoặc places
       if (k === "temp") {
         setTempData(await fetchJsonSafe<ProvinceWeather>(`${API_BASE}/api/provinces/${safeCode}/weather/`));
       } else if (k === "wind") {
@@ -355,7 +346,6 @@ export default function MapClient() {
     }
   };
 
-  // ✅ mở theo code: tìm cả tỉnh + HCM districts + Kiên Giang places
   const openRegionByCode = async (code: string, opts?: { name?: string; latlng?: LatLng; zoom?: boolean }) => {
     const foundProvince = provinceItems.find((x) => x.code === code);
     if (foundProvince) return openProvince(foundProvince, { latlng: opts?.latlng, zoom: opts?.zoom });
@@ -380,7 +370,6 @@ export default function MapClient() {
     return openProvince(pFallback as any, { latlng: opts?.latlng, zoom: opts?.zoom });
   };
 
-  // ✅ popup width
   const w = typeof window !== "undefined" ? window.innerWidth : 1200;
   const popupMaxW = isMobile ? Math.min(420, Math.floor(w * 0.92)) : 360;
   const popupMinW = isMobile ? Math.min(320, Math.floor(w * 0.8)) : 260;
@@ -408,7 +397,7 @@ export default function MapClient() {
 
             <RainviewerLayer active={activeLayerKey === "rain"} rainviewerPath={rainviewerPath} />
 
-            {/* ✅ Marker tỉnh */}
+            {/* Marker tỉnh */}
             <ProvinceCentroidLayer
               items={provinceItems}
               layerKey={activeLayerKey}
@@ -423,7 +412,7 @@ export default function MapClient() {
               }}
             />
 
-            {/* ✅ Marker HCM: hiện khi zoom gần */}
+            {/* Marker HCM: hiện khi zoom gần */}
             {zoomLevel >= 9 && (
               <ProvinceCentroidLayer
                 items={hcmDistricts as any}
@@ -440,7 +429,7 @@ export default function MapClient() {
               />
             )}
 
-            {/* ✅ Marker Kiên Giang: hiện khi zoom >= 8 (đỡ rối) */}
+            {/* Marker Kiên Giang: hiện khi zoom >= 8 */}
             {zoomLevel >= 8 && (
               <ProvinceCentroidLayer
                 items={kgPlaces as any}

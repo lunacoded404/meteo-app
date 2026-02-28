@@ -1,4 +1,3 @@
-// src/components/discover/overview/CurrentSection.tsx
 "use client";
 
 import React from "react";
@@ -19,7 +18,6 @@ export default function CurrentSection({
 }: {
   apiBase?: string;
 }) {
-  // ✅ Lấy tỉnh/thành đang được chọn từ thanh tìm kiếm (publish qua regionBus)
   const selectedRegion = useRegionBusSelection(DEFAULT_HCM);
 
   const { data, loading, err } = useCurrentWeather({
@@ -27,8 +25,6 @@ export default function CurrentSection({
     regionCode: selectedRegion?.code,
   });
 
-  // ✅ onChangeRegion / items / loadingList vẫn truyền để khỏi vỡ props
-  // (UI search trong CurrentSectionView bạn đang ẩn rồi)
   return (
     <CurrentSectionView
       selectedRegion={selectedRegion}

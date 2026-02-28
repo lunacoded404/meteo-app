@@ -1,4 +1,3 @@
-// src/components/discover/overview/details/details.utils.tsx
 import type { HourlyPoint } from "./details.types";
 
 export const STORAGE_KEY = "meteo:lastRegion";

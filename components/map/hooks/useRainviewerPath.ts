@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 
 export function useRainviewerPath() {
@@ -8,7 +7,6 @@ export function useRainviewerPath() {
   useEffect(() => {
     const run = async () => {
       try {
-        // bạn đang có /api/rainviewer proxy ở Next
         const res = await fetch("/api/rainviewer", { cache: "no-store" });
         if (!res.ok) return;
 

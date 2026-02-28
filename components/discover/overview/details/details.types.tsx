@@ -1,4 +1,3 @@
-// src/components/discover/overview/details/details.types.tsx
 export type RegionDetail = {
   code: string;
   name: string;

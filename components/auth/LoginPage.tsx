@@ -34,18 +34,11 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-    // const res = await fetch(`/api/auth/login`, {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ username, password }),
-    // });
-
-// Trong LoginPage.tsx
-const res = await fetch("/api/auth/login", { // Bỏ biến môi trường và dấu / ở cuối
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ username, password }),
-});
+    const res = await fetch("/api/auth/login", { 
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
 
 
 

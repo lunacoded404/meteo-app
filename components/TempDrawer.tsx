@@ -84,7 +84,7 @@ export default function TempDrawer({
   onClose: () => void;
   data: ProvinceWeather | null;
 }) {
-  // ✅ Hooks luôn chạy (không return sớm trước hooks)
+
   const provinceName = data?.province?.name ?? "Nhiệt độ";
 
   const futurePoints = useMemo(
@@ -110,7 +110,6 @@ export default function TempDrawer({
   const futureOption = useMemo(() => (futurePoints.length === 7 ? makeChartOption(futurePoints) : null), [futurePoints]);
   const pastOption = useMemo(() => (pastPoints.length === 7 ? makeChartOption(pastPoints) : null), [pastPoints]);
 
-  // ✅ lock scroll + ESC chỉ khi open
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -123,7 +122,6 @@ export default function TempDrawer({
     };
   }, [open, onClose]);
 
-  // ✅ Sau khi hooks đã chạy hết, mới return null
   if (!open) return null;
 
   return (

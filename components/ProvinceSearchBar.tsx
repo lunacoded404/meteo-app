@@ -1,4 +1,3 @@
-// components/ProvinceSearchBar.tsx
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -97,7 +96,6 @@ export default function ProvinceSearchBar({
 
   return (
     <div ref={rootRef} className="w-[280px] max-w-[70vw]">
-      {/* ✅ màu giống panel layer */}
       <div className="rounded-2xl bg-slate-900/80 text-slate-100 backdrop-blur shadow-lg border border-slate-700/60 overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2">
           <Search className="h-4 w-4 text-slate-200 shrink-0" />

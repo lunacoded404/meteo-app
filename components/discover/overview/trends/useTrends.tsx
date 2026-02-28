@@ -1,4 +1,3 @@
-// src/components/discover/overview/trends/useTrends.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -37,7 +36,6 @@ function startOfYear(y: number) {
 
 function buildYears6(): number[] {
   const cur = new Date().getFullYear();
-  // ✅ current year + 5 năm trước => 6 năm (ví dụ 2025..2020)
   return Array.from({ length: 6 }).map((_, i) => cur - i);
 }
 
@@ -60,8 +58,6 @@ export function buildDailyFromArchive(resp: ArchiveResp): DailyPoint[] {
   const tmin = d.temperature_2m_min ?? [];
   const precip = d.precipitation_sum ?? [];
   const wind = d.wind_speed_10m_max ?? [];
-
-  // humidity daily mean: compute from hourly
   const h = resp.hourly ?? {};
   const ht = h.time ?? [];
   const rh = h.relative_humidity_2m ?? [];
@@ -97,11 +93,7 @@ export function buildDailyFromArchive(resp: ArchiveResp): DailyPoint[] {
 export function useTrends() {
   const [region, setRegion] = useState<RegionDetail>(DEFAULT_REGION);
   const [metric, setMetric] = useState<MetricKey>("temperature");
-
-  // ✅ dropdown 1: 12m hoặc năm cụ thể
   const [period, setPeriod] = useState<PeriodKey>("12m");
-
-  // ✅ dropdown 2: tháng (chỉ dùng khi period là năm)
   const [monthFilter, setMonthFilter] = useState<number | "all">("all");
 
   const [loading, setLoading] = useState(false);
@@ -110,13 +102,11 @@ export function useTrends() {
 
   const years = useMemo(() => buildYears6(), []);
 
-  // init from storage
   useEffect(() => {
     const saved = readSavedRegion();
     if (saved) setRegion(saved);
   }, []);
 
-  // listen RegionSearch event
   useEffect(() => {
     const handler = (e: Event) => {
       const ce = e as CustomEvent<RegionEventDetail>;
@@ -132,12 +122,10 @@ export function useTrends() {
     return () => window.removeEventListener("meteo:region", handler as any);
   }, []);
 
-  // ✅ rule: period=12m => monthFilter phải là all
   useEffect(() => {
     if (period === "12m" && monthFilter !== "all") setMonthFilter("all");
   }, [period, monthFilter]);
 
-  // ✅ Fetch 6 năm 1 lần (không refetch khi đổi dropdown)
   useEffect(() => {
     let alive = true;
 
@@ -192,16 +180,13 @@ export function useTrends() {
   }, [region.lat, region.lon, years]);
 
   const vm: TrendsVM = useMemo(() => {
-    // last12m: 365 ngày cuối
     const last12m = dailyAll.length > 365 ? dailyAll.slice(-365) : dailyAll;
 
     let filtered: DailyPoint[] = [];
 
     if (period === "12m") {
-      // ✅ 12m luôn all months
       filtered = last12m;
     } else {
-      // ✅ period là năm cụ thể (2025..2020)
       filtered = dailyAll.filter((d) => yearOf(d.date) === period);
 
       if (monthFilter !== "all") {
@@ -279,7 +264,7 @@ export function useTrends() {
     loading,
     err,
     setMetric,
-    setPeriod,       // ✅ phải có dòng này
+    setPeriod,      
     setMonthFilter,
   };
 

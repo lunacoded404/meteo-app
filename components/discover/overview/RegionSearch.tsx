@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -26,7 +24,6 @@ declare global {
 
 const STORAGE_KEY = "meteo:lastRegion";
 
-// ✅ hardcode default HCM centroid để luôn fetch được
 const DEFAULT_HCM: ProvinceIndexItem = {
   code: "79",
   name: "TP.Hồ Chí Minh",
@@ -48,7 +45,6 @@ export function normalizeVN(s: string) {
     .trim();
 }
 
-// ✅ đảm bảo luôn trả về item có centroid (fallback HCM có centroid)
 export function pickDefaultHCM(items: ProvinceIndexItem[]) {
   const candidates = [
     "tp. ho chi minh",
@@ -63,13 +59,11 @@ export function pickDefaultHCM(items: ProvinceIndexItem[]) {
     items.find((it) => normalizeVN(it.name).includes("ho chi minh")) ||
     null;
 
-  // nếu found có centroid thì dùng, còn không thì fallback HCM chuẩn
   if (found?.centroid) return found;
   return DEFAULT_HCM;
 }
 
 function emitRegion(it: ProvinceIndexItem) {
-  // ✅ nếu item không có centroid thì không emit
   if (!it?.centroid) return;
 
   const detail: RegionEventDetail = {
@@ -107,7 +101,6 @@ export default function RegionSearch({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // 0) đọc lựa chọn trước đó từ localStorage (nếu có)
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -127,7 +120,6 @@ export default function RegionSearch({
         onChange(saved);
         setQ(saved.name);
 
-        // ✅ emit lại để HourlySection fetch đúng ngay khi load trang
         window.dispatchEvent(
           new CustomEvent("meteo:region", {
             detail: { code: j.code, name: j.name, lat: j.lat, lon: j.lon },
@@ -135,10 +127,8 @@ export default function RegionSearch({
         );
       }
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 1) load provinces từ GeoJSON /api/provinces/
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -190,25 +180,20 @@ export default function RegionSearch({
     };
   }, [apiBase]);
 
-  // 2) default to TP.HCM nếu chưa có value
   useEffect(() => {
     if (value?.code) return;
-    // nếu items chưa load vẫn default được (fallback HCM có centroid)
     const def = items.length ? pickDefaultHCM(items) : DEFAULT_HCM;
 
     onChange(def);
     setQ(def.name);
     emitRegion(def);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, value?.code]);
 
-  // 3) nếu parent đổi value từ ngoài, sync lại text input
   useEffect(() => {
     if (value?.name) setQ(value.name);
   }, [value?.name]);
 
-  // 4) close on outside click
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (!rootRef.current) return;
@@ -242,7 +227,6 @@ export default function RegionSearch({
   }, [q]);
 
   const commitPick = (it: ProvinceIndexItem) => {
-    // ✅ chặn chọn tỉnh thiếu tọa độ (đỡ “chọn xong mà hourly không đổi”)
     if (!it.centroid) return;
 
     onChange(it);

@@ -36,7 +36,7 @@ export type DaySummary = {
 };
 
 export type HourRow = {
-  time: string; // ISO
+  time: string; 
   temp: number | null;
   feels: number | null;
   rain_mm: number | null;

@@ -81,7 +81,7 @@ export default function WindDrawer({
   onClose: () => void;
   data: ProvinceWind | null;
 }) {
-  // ✅ hooks luôn chạy
+
   const provinceName = data?.province?.name ?? "Gió";
   const sectors = data?.rose ?? [];
   const hasRoseData = sectors.length > 0;

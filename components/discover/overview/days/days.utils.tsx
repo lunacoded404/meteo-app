@@ -1,4 +1,3 @@
-// src/components/discover/overview/days/days.utils.tsx
 import type { DailyForecastPoint, RegionDetail } from "./days.types";
 
 export const STORAGE_KEY = "meteo:lastRegion";
@@ -27,15 +26,13 @@ function monthLabelVI(monthKey: string) {
   const [yy, mm] = monthKey.split("-").map(Number);
   const d = new Date(yy, (mm || 1) - 1, 1);
   if (Number.isNaN(d.getTime())) return monthKey;
-  // Ví dụ: "Tháng 1" / "Tháng 2" ...
   return d.toLocaleDateString("vi-VN", { month: "long" });
 }
 
-// ✅ Chỉ tạo tabs theo đúng các tháng xuất hiện trong 16 ngày forecast
 export function buildMonthTabsFromDays(days: DailyForecastPoint[]): MonthTab[] {
   const keys = Array.from(new Set(days.map((d) => monthKeyOf(d.date))))
     .filter(Boolean)
-    .sort(); // tăng dần: 2025-12, 2026-01 ...
+    .sort(); 
 
   const out: MonthTab[] = [];
   let lastYear: string | null = null;
@@ -50,7 +47,6 @@ export function buildMonthTabsFromDays(days: DailyForecastPoint[]): MonthTab[] {
     out.push({
       key: k,
       label,
-      // MSN-style: chỉ hiện năm khi qua năm mới (hoặc bạn muốn luôn hiện thì đổi thành year)
       yearLabel: yearChanged ? year : undefined,
     });
 

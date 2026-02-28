@@ -9,7 +9,6 @@ export function cx(...cls: Array<string | false | null | undefined>) {
   return cls.filter(Boolean).join(" ");
 }
 
-// ✅ scroll chính xác: top = elementTop - offsetPx (để không bị sticky bar che)
 function scrollToId(id: string, offsetPx: number) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -49,17 +48,14 @@ export default function ForecastFloatingPanel({
 
   const [active, setActive] = useState(defaultActiveId);
 
-  // ✅ chặn IO giật active/hash trong lúc click-scroll
   const clickScrollingRef = useRef(false);
 
-// ✅ vào trang: set active + scroll tới section đầu tiên, KHÓA IO lúc đầu để khỏi nhảy
 useEffect(() => {
   const hash = (window.location.hash || "").replace("#", "");
   const startId = navItems.some((x) => x.id === hash) ? hash : defaultActiveId;
 
   setActive(startId);
 
-  // ✅ khóa IO lúc init (vì chart/section render trễ)
   clickScrollingRef.current = true;
 
   let cancelled = false;
@@ -69,7 +65,6 @@ useEffect(() => {
 
     const el = document.getElementById(startId);
     if (el) {
-      // sync hash (không tạo history mới khi init)
       if (window.location.hash !== `#${startId}`) {
         window.history.replaceState(null, "", `#${startId}`);
       }
@@ -82,15 +77,13 @@ useEffect(() => {
       return;
     }
 
-    // ✅ retry tối đa ~30 frame (0.5s) để chờ Daily7Charts render id
     if (attempt < 30) {
       requestAnimationFrame(() => tryScroll(attempt + 1));
     } else {
-      clickScrollingRef.current = false; // tránh bị khóa vĩnh viễn
+      clickScrollingRef.current = false; 
     }
   };
 
-  // bắt đầu retry
   requestAnimationFrame(() => tryScroll(0));
 
   return () => {
@@ -99,8 +92,6 @@ useEffect(() => {
   };
 }, [navItems, activeOffsetPx, defaultActiveId]);
 
-
-  // ✅ Active theo section visible khi scroll
   useEffect(() => {
     const ids = navItems.map((x) => x.id);
     const els = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
@@ -124,7 +115,6 @@ useEffect(() => {
       },
       {
         root: null,
-        // ✅ trừ đúng phần sticky top bar
         rootMargin: `-${activeOffsetPx}px 0px -60% 0px`,
         threshold: [0.08, 0.15, 0.25, 0.35],
       }
@@ -141,7 +131,6 @@ useEffect(() => {
 
     setActive(id);
 
-    // ✅ tạo history để share link
     if (window.location.hash !== `#${id}`) {
       window.history.pushState(null, "", `#${id}`);
     }

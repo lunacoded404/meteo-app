@@ -1,4 +1,3 @@
-// src/components/discover/overview/current/regionBus.ts
 "use client";
 
 import { useEffect, useState } from "react";
@@ -47,12 +46,10 @@ export function publishRegionFromItem(it: ProvinceIndexItem) {
   const lon = Number(it?.centroid?.lon);
   if (!it?.code || !it?.name || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
 
-  // persist
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(it));
   } catch {}
 
-  // dispatch event
   window.dispatchEvent(
     new CustomEvent<RegionEventDetail>("meteo:region", {
       detail: { code: it.code, name: it.name, lat, lon },
@@ -60,18 +57,10 @@ export function publishRegionFromItem(it: ProvinceIndexItem) {
   );
 }
 
-/**
- * ✅ FIX hydration:
- * - Render đầu luôn dùng defaultRegion (để SSR = CSR lần đầu)
- * - Sau mount mới đọc localStorage và update
- * - Nghe event meteo:region để sync theo search ở page
- */
 export function useRegionBusSelection(defaultRegion: ProvinceIndexItem) {
-  // ✅ IMPORTANT: KHÔNG đọc localStorage ở đây
   const [region, setRegion] = useState<ProvinceIndexItem>(defaultRegion);
 
   useEffect(() => {
-    // ✅ Sau khi mount mới restore localStorage
     const last = loadLastRegion();
     if (last) {
       setRegion({
@@ -80,7 +69,6 @@ export function useRegionBusSelection(defaultRegion: ProvinceIndexItem) {
         centroid: { lat: last.lat, lon: last.lon },
       });
     } else {
-      // nếu không có lastRegion thì vẫn đảm bảo default
       setRegion(defaultRegion);
     }
 
@@ -96,7 +84,6 @@ export function useRegionBusSelection(defaultRegion: ProvinceIndexItem) {
 
       setRegion(next);
 
-      // đồng bộ storage (tuỳ chọn)
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch {}

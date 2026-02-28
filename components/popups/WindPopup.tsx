@@ -1,14 +1,11 @@
 "use client";
-
-import React from "react";
 import PopupCard, { Stat } from "../PopupCard";
 import { fmt, windDirLabelVN } from "../helpers/popupUtils";
 import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
 
 export type WindRoseSector = {
-  dir_label: string; // ví dụ: "N", "NE", "E"...
-  count: number;     // tần suất
-  // có thể có thêm field nếu backend trả về
+  dir_label: string; 
+  count: number;    
   dir_deg?: number;
 };
 
@@ -53,7 +50,7 @@ const windDescriptionVN = (kmh: number) => {
 };
 
 export default function WindPopup({ data, loading, error, regionName }: WindPopupProps) {
-  const code = data?.province?.code; // ✅ lấy code từ data
+  const code = data?.province?.code; 
   const provinceName = data?.province?.name || regionName || "Không rõ vùng";
 
   const spd = data?.current?.wind_speed_kmh ?? null;

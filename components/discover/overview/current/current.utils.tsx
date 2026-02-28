@@ -1,5 +1,3 @@
-// components/discover/overview/current/current.utils.tsx
-
 import type { CurrentWeather } from "./current.types";
 
 export function cx(...cls: Array<string | false | null | undefined>) {

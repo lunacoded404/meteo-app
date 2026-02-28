@@ -1,4 +1,3 @@
-// components/ClickSpark.tsx
 "use client";
 import React, { useRef, useEffect, useCallback } from "react";
 
@@ -77,7 +76,6 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
         case "ease-in-out":
           return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
         default:
-          // ease-out
           return t * (2 - t);
       }
     },

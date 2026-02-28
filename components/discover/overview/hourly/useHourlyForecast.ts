@@ -15,7 +15,6 @@ type BundleHourlyPoint = {
   temperature_c: number | null;
   feels_like_c: number | null;
   rain_mm: number | null;
-  // nếu backend có weather_code thì map vô wmo
   weather_code?: number | null;
   wmo?: number | null;
 };
@@ -54,10 +53,7 @@ function readSavedRegion(): RegionDetail | null {
 
 export function useHourlyForecast() {
   const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
-
-  // ✅ region luôn non-null để HourlyCard không lỗi type
   const [region, setRegion] = useState<RegionDetail>(DEFAULT_REGION);
-
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -67,13 +63,11 @@ export function useHourlyForecast() {
 
   const [dayKey, setDayKey] = useState<string | null>(null);
 
-  // 1) init từ localStorage
   useEffect(() => {
     const saved = readSavedRegion();
     if (saved) setRegion(saved);
   }, []);
 
-  // 2) nghe event từ RegionSearch
   useEffect(() => {
     const handler = (e: Event) => {
       const ce = e as CustomEvent<RegionEventDetail>;
@@ -91,7 +85,6 @@ export function useHourlyForecast() {
     return () => window.removeEventListener("meteo:region", handler as any);
   }, []);
 
-  // 3) fetch bundle theo province code
   useEffect(() => {
     const code = region?.code;
     if (!code) return;
@@ -143,7 +136,6 @@ export function useHourlyForecast() {
     };
   }, [apiBase, region.code]);
 
-  // 4) group theo ngày => days + selected
   const { days, selected } = useMemo((): { days: DaySummary[]; selected: SelectedDay | null } => {
     const map = new Map<
       string,
@@ -175,7 +167,6 @@ export function useHourlyForecast() {
     return { days: daysBuilt, selected: sel };
   }, [rows, dayKey]);
 
-  // 5) nếu dayKey không còn (đổi tỉnh) => reset
   useEffect(() => {
     if (!days.length) return;
     if (!dayKey || !days.some((d) => d.date === dayKey)) {
@@ -184,7 +175,7 @@ export function useHourlyForecast() {
   }, [days, dayKey]);
 
   return {
-    region, // ✅ non-null
+    region, 
     days,
     selected,
     loading,

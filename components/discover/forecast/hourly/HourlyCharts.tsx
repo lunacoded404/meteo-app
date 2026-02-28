@@ -22,9 +22,8 @@ export default function HourlyCharts({
   const days = useMemo(() => {
     const keys = Array.from(dayMap.keys()).sort(); // YYYY-MM-DD
     const today = localYMD();
-    // lấy từ hôm nay trở đi (tối đa 7 ngày)
     const forward = keys.filter((d) => d >= today).slice(0, 7);
-    // nếu thiếu (do data có thể bắt đầu trước hôm nay), lấy thêm các ngày gần nhất
+
     if (forward.length >= 1) return forward;
     return keys.slice(0, 7);
   }, [dayMap]);
@@ -34,7 +33,6 @@ export default function HourlyCharts({
     return days.includes(today) ? today : days[0] ?? today;
   });
 
-  // khi days thay đổi (lần đầu load), đảm bảo selectedDay hợp lệ
   React.useEffect(() => {
     if (!days.length) return;
     const today = localYMD();
@@ -48,7 +46,6 @@ export default function HourlyCharts({
 
   return (
     <div style={{ ["--fp-offset" as any]: `${scrollOffsetPx}px` }} className="grid grid-cols-1 gap-4">
-      {/* ✅ combobox chọn ngày */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="text-[13px] text-slate-300">
@@ -72,7 +69,6 @@ export default function HourlyCharts({
         </div>
       </div>
 
-      {/* ✅ panels (mỗi panel hiển thị 24h của selectedDay) */}
       <TempHourlyPanel points={dayPoints24} day={selectedDay} />
       <HumidityHourlyPanel points={dayPoints24} day={selectedDay} />
       <WindHourlyPanel points={dayPoints24} day={selectedDay} />

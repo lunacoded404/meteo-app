@@ -25,9 +25,7 @@ export function fmtDateTimeVN(iso?: string | null) {
   return `${fmtDateVN(iso)} ${fmtHourLabelVN(iso)}`;
 }
 
-/** YYYY-MM-DD theo local time (Asia/Ho_Chi_Minh của browser) */
 export function localYMD(d = new Date()) {
-  // en-CA => YYYY-MM-DD
   return d.toLocaleDateString("en-CA");
 }
 
@@ -38,7 +36,6 @@ export function numCell(v: number | null | undefined, unit?: string) {
   return unit ? `${s} ${unit}` : s;
 }
 
-/** Gom hourly points theo ngày YYYY-MM-DD (lấy từ time string của Open-Meteo) */
 export function groupHourlyByDay<T extends { time: string }>(points: T[]) {
   const map = new Map<string, T[]>();
   for (const p of points ?? []) {
@@ -47,7 +44,7 @@ export function groupHourlyByDay<T extends { time: string }>(points: T[]) {
     if (!map.has(day)) map.set(day, []);
     map.get(day)!.push(p);
   }
-  // sort theo time trong từng ngày
+
   for (const [k, arr] of map.entries()) {
     arr.sort((a, b) => String(a.time).localeCompare(String(b.time)));
     map.set(k, arr);
@@ -55,7 +52,6 @@ export function groupHourlyByDay<T extends { time: string }>(points: T[]) {
   return map;
 }
 
-/** Lấy đúng 24 giờ: ưu tiên 0..23 nếu có; fallback: slice(0,24) */
 export function pick24Hours<T extends { time: string }>(dayPoints: T[]) {
   const byHour = new Map<number, T>();
   for (const p of dayPoints ?? []) {
@@ -69,7 +65,7 @@ export function pick24Hours<T extends { time: string }>(dayPoints: T[]) {
     const v = byHour.get(h);
     if (v) out.push(v);
   }
-  // nếu thiếu nhiều quá, fallback
+
   if (out.length < 16) return (dayPoints ?? []).slice(0, 24);
   return out;
 }

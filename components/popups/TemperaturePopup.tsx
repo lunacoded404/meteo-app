@@ -24,7 +24,7 @@ export type TemperaturePopupProps = {
   data: ProvinceWeather | null;
   loading: boolean;
   error: string | null;
-  regionName?: string; // ✅ fallback name từ province_index
+  regionName?: string; 
 };
 
 const pickToday = (all: DailyPoint[]) => {
@@ -59,7 +59,7 @@ const tempDescriptionVN = (t: number) => {
 
 export default function TemperaturePopup({ data, loading, error, regionName }: TemperaturePopupProps) {
 
-  const code = data?.province?.code; // ✅ lấy code từ data
+  const code = data?.province?.code;
   const provinceName = data?.province?.name || regionName || "Không rõ vùng";
   const currentTemp = data?.current?.temperature ?? null;
 
@@ -72,7 +72,6 @@ export default function TemperaturePopup({ data, loading, error, regionName }: T
     return pickToday(all);
   }, [data]);
 
-  // ✅ icon theo nhiệt độ cao/thấp (giữ như cũ)
   const iconSrc = currentTemp != null && currentTemp >= 28 ? "/high_temp.png" : "/short_temp.png";
 
   const currentDesc =

@@ -12,9 +12,9 @@ export interface SplitTextProps {
   className?: string;
   delay?: number;
   duration?: number;
-  stagger?: number; // Thời gian trễ giữa các chữ
+  stagger?: number; 
   ease?: string;
-  splitType?: 'words' | 'chars'; // Tạm thời hỗ trợ words và chars
+  splitType?: 'words' | 'chars'; 
   from?: gsap.TweenVars;
   to?: gsap.TweenVars;
   threshold?: number;
@@ -27,7 +27,7 @@ const SplitText: React.FC<SplitTextProps> = ({
   className = '',
   delay = 0,
   duration = 0.5,
-  stagger = 0.05, // Mặc định mỗi chữ cách nhau 0.05s
+  stagger = 0.05, 
   ease = 'power3.out',
   splitType = 'chars',
   from = { opacity: 0, y: 50 },
@@ -38,8 +38,6 @@ const SplitText: React.FC<SplitTextProps> = ({
   
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Dùng state để đảm bảo hydrat hóa (hydration) khớp giữa server/client
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -54,30 +52,28 @@ const SplitText: React.FC<SplitTextProps> = ({
 
       gsap.fromTo(
         elements,
-        { ...from }, // Trạng thái bắt đầu
+        { ...from }, 
         {
-          ...to,     // Trạng thái kết thúc
+          ...to,    
           duration,
           ease,
           delay,
-          stagger,   // Hiệu ứng đuổi nhau
+          stagger,   
           scrollTrigger: {
             trigger: containerRef.current,
-            start: `top ${100 - threshold * 100}%`, // Tính toán vị trí kích hoạt
+            start: `top ${100 - threshold * 100}%`,
             end: 'bottom top',
-            toggleActions: 'play none none reverse', // Chơi khi vào, reverse khi ra
-            // markers: true, // Bật lên để debug vị trí scroll nếu cần
+            toggleActions: 'play none none reverse', 
           },
         }
       );
     },
     {
-      dependencies: [isReady, text, delay, duration, splitType], // Chạy lại khi các props này thay đổi
+      dependencies: [isReady, text, delay, duration, splitType], 
       scope: containerRef,
     }
   );
 
-  // Hàm render chia nhỏ text
   const renderContent = () => {
     if (splitType === 'words') {
       const words = text.split(' ');
@@ -85,7 +81,7 @@ const SplitText: React.FC<SplitTextProps> = ({
         <span
           key={index}
           className="split-item inline-block will-change-transform will-change-opacity"
-          style={{ marginRight: '0.25em' }} // Khoảng cách giữa các từ
+          style={{ marginRight: '0.25em' }} 
         >
           {word}
         </span>
@@ -93,12 +89,11 @@ const SplitText: React.FC<SplitTextProps> = ({
     }
 
     if (splitType === 'chars') {
-      // Chia theo từng ký tự
       return text.split('').map((char, index) => (
         <span
           key={index}
           className="split-item inline-block will-change-transform will-change-opacity"
-          style={{ whiteSpace: 'pre' }} // Giữ nguyên khoảng trắng nếu có
+          style={{ whiteSpace: 'pre' }} 
         >
           {char}
         </span>
@@ -112,11 +107,8 @@ const SplitText: React.FC<SplitTextProps> = ({
     <div
       ref={containerRef}
       className={`${className}`}
-      style={{ textAlign, overflow: 'hidden' }} // overflow hidden để tránh scroll bar khi chữ bay từ ngoài vào
+      style={{ textAlign, overflow: 'hidden' }} 
     >
-      {/* Mẹo: Render opacity 0 ban đầu để tránh FOUC (Flash of Unstyled Content), 
-        GSAP sẽ set lại opacity khi chạy.
-      */}
       <div style={{ opacity: isReady ? 1 : 0 }}>
         {renderContent()}
       </div>

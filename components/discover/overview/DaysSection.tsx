@@ -1,4 +1,3 @@
-// src/components/discover/overview/DaysSection.tsx
 "use client";
 
 import React from "react";

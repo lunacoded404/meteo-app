@@ -1,6 +1,4 @@
 "use client";
-
-import React from "react";
 import PopupCard, { Stat } from "../PopupCard";
 import { fmt, clamp } from "../helpers/popupUtils";
 import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
@@ -58,7 +56,7 @@ export default function HumidityPopup({ data, loading, error, regionName }: Humi
   const timeText = `Cập nhật lúc: ${formatDateTimeVN(data?.current?.time)}`;
   const desc = h == null ? "Chưa có dữ liệu độ ẩm hiện tại." : humidDescriptionVN(h);
 
-  const code = data?.province?.code; // ✅ lấy code từ data
+  const code = data?.province?.code; 
 
   return (
     <PopupCard

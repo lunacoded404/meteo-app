@@ -17,7 +17,6 @@ export function Td({ children }: { children: React.ReactNode }) {
   return <td className="px-4 py-2 text-[13px] text-slate-100">{children}</td>;
 }
 
-/** ✅ Có id để ForecastFloatingPanel nhảy; scroll margin top để không bị Header che */
 export function SectionCard({
   id,
   title,

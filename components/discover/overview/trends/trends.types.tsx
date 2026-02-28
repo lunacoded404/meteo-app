@@ -1,7 +1,5 @@
-// src/components/discover/overview/trends/trends.types.tsx
 export type MetricKey = "temperature" | "precipitation" | "humidity" | "wind";
 
-// ✅ Period dropdown: 12m hoặc năm cụ thể (2025, 2024...)
 export type PeriodKey = "12m" | number;
 
 export type RegionDetail = {
@@ -22,9 +20,9 @@ export type DailyPoint = {
   date: string; // YYYY-MM-DD
   tmax: number | null;
   tmin: number | null;
-  precip: number | null; // mm/day
-  wind: number | null; // km/h (wind_speed_10m_max)
-  humidity: number | null; // % daily mean computed from hourly
+  precip: number | null; 
+  wind: number | null; 
+  humidity: number | null; 
 };
 
 export type ClimateInfo = {
@@ -44,10 +42,8 @@ export type DailySummaryRow = {
 
 export type TrendsVM = {
   region: RegionDetail;
-
-  // ✅ dropdown period + list years
   period: PeriodKey;
-  years: number[]; // ví dụ [2025, 2024, 2023, 2022, 2021, 2020]
+  years: number[]; 
   monthFilter: number | "all";
 
   rangeLabel: string;

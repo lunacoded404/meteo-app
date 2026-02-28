@@ -1,4 +1,3 @@
-// src/lib/track.ts
 export type TrackPayload = {
   province_code: string;
   province_name?: string;
@@ -16,6 +15,5 @@ export async function trackRegion(payload: TrackPayload) {
       keepalive: true,
     });
   } catch {
-    // bỏ qua lỗi tracking
   }
 }

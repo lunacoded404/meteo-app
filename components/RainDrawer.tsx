@@ -8,7 +8,6 @@ import type { ProvinceRain, DailyRainPoint } from "./popups/RainPopup";
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false }) as any;
 
 const formatDateLabel = (iso: string) => {
-  // iso có thể là "2025-12-28" hoặc "2025-12-28T00:00:00"
   const d = new Date(iso.includes("T") ? iso : `${iso}T00:00:00`);
   if (Number.isNaN(d.getTime())) return iso;
   const dd = String(d.getDate()).padStart(2, "0");
@@ -18,10 +17,10 @@ const formatDateLabel = (iso: string) => {
 
 type RainChartPoint = {
   date: string;
-  mm: number; // luôn number (0 nếu null)
-  prob: number; // luôn number (0 nếu null)
-  raw_mm: number; // raw (0 nếu null)
-  raw_prob: number; // raw (0 nếu null)
+  mm: number; 
+  prob: number; 
+  raw_mm: number; 
+  raw_prob: number; 
 };
 
 const makeRainChartOption = (points: RainChartPoint[]) => {
@@ -67,7 +66,6 @@ const makeRainChartOption = (points: RainChartPoint[]) => {
     },
     yAxis: [
       {
-        // ✅ mm cố định 0-40 giống “thước” của TempDrawer
         type: "value",
         min: 0,
         max: 40,
@@ -80,7 +78,6 @@ const makeRainChartOption = (points: RainChartPoint[]) => {
         splitLine: { show: true, lineStyle: splitLineStyle },
       },
       {
-        // ✅ % cố định 0-100
         type: "value",
         min: 0,
         max: 100,
@@ -94,7 +91,6 @@ const makeRainChartOption = (points: RainChartPoint[]) => {
       },
     ],
     series: [
-      // ✅ baseline: luôn thấy “cột” dù mm=0
       {
         name: "__baseline_mm__",
         type: "pictorialBar",
@@ -114,7 +110,6 @@ const makeRainChartOption = (points: RainChartPoint[]) => {
         yAxisIndex: 0,
         z: 2,
         barWidth: 18,
-        // ✅ cột nhỏ vẫn thấy
         barMinHeight: 3,
         data: points.map((p) => ({
           value: p.mm,
@@ -135,7 +130,6 @@ const makeRainChartOption = (points: RainChartPoint[]) => {
             },
           },
         },
-        // label giống TempDrawer (chỉ show khi > 0 để đỡ rối)
         label: {
           show: true,
           position: "top",
@@ -164,7 +158,6 @@ const makeRainChartOption = (points: RainChartPoint[]) => {
         })),
         itemStyle: { color: "rgba(245,158,11,0.95)" },
         lineStyle: { color: "rgba(245,158,11,0.95)", width: 2 },
-        // có thể bật label nếu muốn giống TempDrawer (nhưng hơi rối)
         label: { show: false },
         areaStyle: { opacity: 0.06 },
       },
@@ -181,19 +174,10 @@ export default function RainDrawer({
   onClose: () => void;
   data: ProvinceRain | null;
 }) {
-  // ✅ Hooks luôn chạy (không return sớm)
   const provinceName = data?.province?.name ?? "Mưa";
-
-  // Daily points: tuỳ payload bạn có thể là 7 ngày tới + 7 ngày qua.
-  // Nếu backend chỉ có 7 ngày tới, thì “7 ngày qua” sẽ báo không đủ dữ liệu.
   const futureRaw = (data?.daily?.points ?? []).slice(0, 7);
-
-  // ✅ Thử đọc “past” nếu backend có field khác
-  // (Bạn có thể xoá/đổi nếu chắc chắn backend luôn có daily_past_7)
   const pastRaw: DailyRainPoint[] =
-    // @ts-ignore
     (data as any)?.daily_past_7 ??
-    // @ts-ignore
     (data as any)?.past_points ??
     [];
 
@@ -236,7 +220,6 @@ export default function RainDrawer({
     [pastPoints]
   );
 
-  // ✅ lock scroll + ESC chỉ khi open
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;

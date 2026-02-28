@@ -58,8 +58,6 @@ export default function TemperaturePanel({ rows }: { rows: DailyRow[] }) {
   return (
     <SectionCard id="temp" title="Nhiệt độ (°C)" subtitle="Cao nhất/Thấp nhất theo ngày">
       <ReactECharts option={option} style={{ height: 300, width: "100%" }} notMerge lazyUpdate />
-
-      {/* ✅ hamburger */}
       <div className="mt-2 flex justify-end">
         <button
           type="button"

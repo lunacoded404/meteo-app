@@ -90,7 +90,6 @@ export default function CurrentSectionView({
   selectedRegion: ProvinceIndexItem;
   onChangeRegion: (it: ProvinceIndexItem) => void;
 
-  // ✅ vẫn nhận để khỏi sửa code cha (CurrentSection.tsx)
   items: ProvinceIndexItem[];
   loadingList: boolean;
 
@@ -111,9 +110,7 @@ export default function CurrentSectionView({
         "p-5 md:p-6"
       )}
     >
-      {/* Top bar */}
       <div className="flex items-start justify-between gap-4">
-        {/* Left */}
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex items-center gap-2 text-white/95">
@@ -132,41 +129,13 @@ export default function CurrentSectionView({
 
           <div className="mt-1 text-[12px] text-white/70">{loading ? "Đang tải…" : updated}</div>
         </div>
-
-        {/* Right (desktop) */}
         <div className="hidden md:flex items-center gap-3">
-          {/* ✅ BỎ UI search bar — vẫn giữ import/props để không sửa chỗ gọi */}
-          {/* 
-          <div className="w-[320px]">
-            <ProvinceSearchBar
-              items={items?.length ? items : [selectedRegion]}
-              placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
-              onSelect={onChangeRegion}
-            />
-          </div> 
-          */}
           <div className="text-[11px] text-white/55 whitespace-nowrap">Nguồn: Open-Meteo</div>
         </div>
       </div>
 
-      {/* Mobile search (bỏ UI) */}
-      {/*
-      <div className="mt-3 md:hidden">
-        <ProvinceSearchBar
-          items={items?.length ? items : [selectedRegion]}
-          placeholder={loadingList ? "Đang tải danh sách..." : "Tìm tỉnh/thành..."}
-          onSelect={onChangeRegion}
-        />
-        <div className="mt-2 text-[11px] text-white/55">
-          Gõ tên • ↑↓ chọn • Enter để chọn • Esc để đóng
-        </div>
-      </div>
-      */}
-
-      {/* ✅ Hero card */}
       <CurrentCard data={data} loading={loading} err={err} />
 
-      {/* Bottom stats row */}
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
         <StatCard
           icon={<Wind className="h-4 w-4" />}

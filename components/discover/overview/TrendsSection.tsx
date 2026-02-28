@@ -1,4 +1,3 @@
-// src/components/discover/overview/TrendsSection.tsx
 "use client";
 
 import React from "react";
@@ -15,7 +14,7 @@ export default function TrendsSection() {
       loading={loading}
       err={err}
       setMetric={setMetric}
-      setPeriod={setPeriod}         // ✅ truyền đúng
+      setPeriod={setPeriod}        
       setMonthFilter={setMonthFilter}
     />
   );

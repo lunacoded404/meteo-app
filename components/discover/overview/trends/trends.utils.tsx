@@ -1,4 +1,3 @@
-// src/components/discover/overview/trends/trends.utils.tsx
 import type { DailyPoint, MetricKey } from "./trends.types";
 
 export const STORAGE_KEY = "meteo:lastRegion";
@@ -43,7 +42,7 @@ export function movingAvg(vals: Array<number | null>, win = 30) {
 }
 
 export function pickMetric(dp: DailyPoint, k: MetricKey) {
-  if (k === "temperature") return dp.tmax;        // dùng tmax cho cảnh báo
+  if (k === "temperature") return dp.tmax;        
   if (k === "precipitation") return dp.precip;
   if (k === "humidity") return dp.humidity;
   return dp.wind;
@@ -88,7 +87,7 @@ export function computeClimateInfo(daily: DailyPoint[]) {
 
     const tmaxAvg = agg.tmax / agg.n;
     const tminAvg = agg.tmin / agg.n;
-    const precipSum = agg.precip; // tổng tháng (xấp xỉ)
+    const precipSum = agg.precip; 
     const windAvg = agg.wind / agg.n;
 
     if (!hottest || tmaxAvg > hottest.v) hottest = { m, v: tmaxAvg };
@@ -106,7 +105,6 @@ export function computeClimateInfo(daily: DailyPoint[]) {
 }
 
 export function computeWarning(daily: DailyPoint[], metric: MetricKey) {
-  // so sánh 30 ngày gần nhất vs 30 ngày trước đó
   if (daily.length < 90) return null;
 
   const vals = daily.map((d) => pickMetric(d, metric));

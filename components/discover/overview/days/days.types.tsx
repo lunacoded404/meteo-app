@@ -1,5 +1,3 @@
-// src/components/discover/overview/days/days.types.tsx
-
 export type RegionDetail = {
   code: string;
   name: string;
@@ -23,12 +21,8 @@ export type DailyForecastPoint = {
 
 export type DaysVM = {
   region: RegionDetail;
-
-  // 16-day forecast
   days: DailyForecastPoint[];
-
-  // UI state
-  monthKey: string; // "YYYY-MM"
+  monthKey: string; 
   monthTabs: Array<{ key: string; label: string; yearLabel?: string }>;
   selectedDate: string | null;
 

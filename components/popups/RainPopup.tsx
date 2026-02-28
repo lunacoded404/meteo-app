@@ -1,6 +1,4 @@
 "use client";
-
-import React from "react";
 import PopupCard, { Stat } from "../PopupCard";
 import { fmt, clamp } from "../helpers/popupUtils";
 import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
@@ -68,7 +66,7 @@ export default function RainPopup({ data, loading, error, regionName }: RainPopu
   const probBar = probNow == null ? 0 : clamp(probNow, 0, 100);
   const desc = rainDescriptionVN(mmNow, probNow);
 
-  const code = data?.province?.code; // ✅ lấy code từ data
+  const code = data?.province?.code; 
 
   return (
     <PopupCard

@@ -2,9 +2,8 @@ import { AdminExportPdfButton } from "@/app/admin/reports/AdminExportPdfButton";
 import PopupCard from "@/components/PopupCard";
 
 export type WindRoseSector = {
-  dir_label: string; // ví dụ: "N", "NE", "E"...
-  count: number;     // tần suất
-  // có thể có thêm field nếu backend trả về
+  dir_label: string; 
+  count: number;     
   dir_deg?: number;
 };
 
@@ -81,15 +80,12 @@ export default function AdminWindPopup ({ data, loading, error, regionName }: Wi
                 {spd == null ? "—" : `${spd} km/h`}
               </div>
             </div>
-
             <div className="flex gap-4">
-              {/* Thêm các phần tử khác nếu cần */}
             </div>
           </div>
         </div>
       )}
 
-      {/* ✅ nút export chỉ admin */}
       {data?.province?.code ? (
         <div className="mt-3">
           <AdminExportPdfButton provinceCode={data.province.code} />

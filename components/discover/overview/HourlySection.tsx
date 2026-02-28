@@ -1,4 +1,3 @@
-// src/components/discover/overview/HourlySection.tsx
 "use client";
 
 import React, { useState } from "react";
