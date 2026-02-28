@@ -13,19 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-
-
-# ALLOWED_HOSTS = [
-#     'meteo-app-coral.vercel.app',
-#     '.railway.app', # Cho phép tất cả subdomain của railway
-#     'localhost',
-#     '127.0.0.1',
-# ]
-
 
 import os, dj_database_url
 from django.core.exceptions import ImproperlyConfigured
@@ -38,9 +26,6 @@ if not db_conf:
 DATABASES = {"default": db_conf}
 
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,meteo-backend-production-150f.up.railway.app").split(",") if h.strip()]
-
-
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -67,7 +52,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# CORS / CSRF allowed origins can be provided via environment variables (comma-separated)
+
 CORS_ALLOWED_ORIGINS = [
     o.strip() for o in os.environ.get(
         "CORS_ALLOWED_ORIGINS",
@@ -84,16 +69,13 @@ CSRF_TRUSTED_ORIGINS = [
     if o.strip()
 ]
 
-# Allow credentials for cross-origin requests (can be overridden by env)
+
 CORS_ALLOW_CREDENTIALS = os.environ.get("CORS_ALLOW_CREDENTIALS", "True") == "True"
 
-# Security settings for production
 if not DEBUG:
-    # When behind a proxy (Railway) ensure Django considers requests secure
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    # Optional redirect to HTTPS (enable via env if desired)
     SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "False") == "True"
 
 
@@ -147,19 +129,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 
 
-
-
-
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 6}},
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
@@ -169,9 +142,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
 import os
 
 STATIC_URL = 'static/'

@@ -1,4 +1,3 @@
-# backend/api/models.py
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -13,7 +12,7 @@ class Province(models.Model):
 
     class Meta:
         db_table = "provinces"
-        managed = False  # bảng đã có sẵn trên Supabase
+        managed = False 
 
 
 class WeatherForecastHourly(models.Model):
@@ -66,13 +65,6 @@ class ForecastCache(models.Model):
         db_table = "forecast_cache"
 
     
-
-
-
-
-# Role of user (admin/user)
-
-
 class UserRole(models.Model):
     ROLE_CHOICES = [
         ("user", "User"),
@@ -87,24 +79,16 @@ class UserRole(models.Model):
     def __str__(self):
         return f"{self.user.username}:{self.role}"
     
-
-# Admin
-
-# Layers management
-
-
 class MapLayer(models.Model):
-    key = models.CharField(max_length=40, unique=True)      # temp|wind|rain|humidity|cloud
-    name = models.CharField(max_length=80)                  # label hiển thị (Nhiệt Độ, Gió...)
+    key = models.CharField(max_length=40, unique=True)      
+    name = models.CharField(max_length=80)                  
     is_enabled = models.BooleanField(default=True)
-    icon = models.CharField(max_length=60, default="Thermometer")  # tên icon lucide
+    icon = models.CharField(max_length=60, default="Thermometer")  
 
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.key
-
-# Phường xã
 
 class Place(models.Model):
     code = models.CharField(max_length=64, unique=True)

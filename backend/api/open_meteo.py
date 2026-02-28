@@ -1,4 +1,3 @@
-# backend/api/open_meteo.py
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -7,30 +6,13 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 from django.db import connection
 
-# =========================
-# Open-Meteo endpoints
-# =========================
 OPEN_METEO_FORECAST_BASE = "https://api.open-meteo.com/v1/forecast"
 OPEN_METEO_ARCHIVE_BASE = "https://archive-api.open-meteo.com/v1/archive"
-
-# Bảng provinces hiện có của bạn (Supabase/Postgres)
 PROVINCES_TABLE = "public.provinces"
-
-# Timeout gọi API
 HTTP_TIMEOUT_SEC = 20
-
-# =========================
-# Cloud field normalize
-# =========================
-# Open-Meteo: hourly/current = cloud_cover
-# Open-Meteo: daily = cloud_cover_mean (thường), có thể có min/max tuỳ dataset
 DAILY_CLOUD_CANONICAL = "cloud_cover_mean"
 DAILY_CLOUD_ALIASES = {"cloud_cover": DAILY_CLOUD_CANONICAL}
 
-
-# =========================
-# Helpers
-# =========================
 def _normalize_code(code: str | int) -> str:
     """
     Chuẩn hoá mã tỉnh:
@@ -141,10 +123,6 @@ def _alias_daily_cloud(payload: Dict[str, Any]) -> Dict[str, Any]:
             daily["cloud_cover"] = daily.get(DAILY_CLOUD_CANONICAL)
     return payload
 
-
-# =========================
-# Public API (dùng trong views)
-# =========================
 def om_forecast_daily(
     province_code: str | int,
     start: date,
@@ -156,7 +134,7 @@ def om_forecast_daily(
     daily_fields ví dụ:
       ["temperature_2m_max","temperature_2m_min","precipitation_sum","wind_speed_10m_max","cloud_cover_mean"]
 
-    ✅ Bạn cũng có thể truyền "cloud_cover" => backend tự đổi sang "cloud_cover_mean".
+    Bạn cũng có thể truyền "cloud_cover" => backend tự đổi sang "cloud_cover_mean".
     """
     lat, lon = _get_latlon_by_province_code(province_code)
 
@@ -183,7 +161,7 @@ def om_archive_daily(
 ) -> Dict[str, Any]:
     """
     Lấy daily từ Archive API cho khoảng ngày [start, end] (quá khứ).
-    ✅ Normalize cloud field tương tự forecast daily.
+    Normalize cloud field tương tự forecast daily.
     """
     lat, lon = _get_latlon_by_province_code(province_code)
 
@@ -225,8 +203,6 @@ def get_weather_snapshot(
     """
     lat, lon = _get_latlon_by_province_code(province_code)
     code = _normalize_code(province_code)
-
-    # Lấy name để in PDF (không bắt buộc nhưng nên có)
     province_name = None
     with connection.cursor() as cur:
         cur.execute(f"select name from {PROVINCES_TABLE} where code=%s limit 1", [code])
@@ -238,14 +214,12 @@ def get_weather_snapshot(
 
     today = date.today()
 
-    # ====== TODAY => current ======
     if day == today:
         payload = _om_get(
             OPEN_METEO_FORECAST_BASE,
             lat,
             lon,
             {
-                # Các biến current (v1)
                 "current": ",".join(
                     [
                         "temperature_2m",
@@ -272,10 +246,7 @@ def get_weather_snapshot(
             "precip_mm": _safe_float(cur.get("precipitation")),
         }
 
-    # ====== PAST DAY => archive hourly ======
-    # Chọn mốc 12:00 tại local time để lấy snapshot tương đối đại diện
     target_dt = datetime.fromisoformat(day.isoformat() + "T12:00")
-
     hourly_vars = [
         "temperature_2m",
         "relative_humidity_2m",
@@ -299,7 +270,6 @@ def get_weather_snapshot(
     hourly = payload.get("hourly") or {}
     times: List[str] = hourly.get("time") or []
     if not times:
-        # fallback nếu archive không có time
         return {
             "province_code": code,
             "province_name": province_name,

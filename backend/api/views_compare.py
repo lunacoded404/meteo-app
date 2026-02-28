@@ -1,4 +1,3 @@
-# api/views_compare.py
 from datetime import date, timedelta
 import requests
 from rest_framework.decorators import api_view, permission_classes
@@ -9,7 +8,6 @@ from rest_framework import status
 from api.open_meteo import om_forecast_daily, om_archive_daily  # bạn tự implement gọi API
 
 def week_range(d: date):
-    # Monday=0
     start = d - timedelta(days=d.weekday())
     end = start + timedelta(days=6)
     return start, end
@@ -17,7 +15,6 @@ def week_range(d: date):
 @api_view(["GET"])
 @permission_classes([IsAdminUser])
 def compare_week(request, province_code: str):
-    # ✅ guard: tránh /undefined/
     code = (province_code or "").strip()
     if not code or code.lower() == "undefined" or code.lower() == "null":
         return Response({"detail": "Invalid province_code"}, status=status.HTTP_400_BAD_REQUEST)
@@ -53,7 +50,6 @@ def compare_week(request, province_code: str):
             return None
         return a - b
 
-    # daily fields: thử cloud_cover_mean trước; nếu upstream 400 thì fallback cloud_cover
     daily_fields_primary = [
         "temperature_2m_max",
         "temperature_2m_min",
@@ -74,7 +70,6 @@ def compare_week(request, province_code: str):
             this_week = om_forecast_daily(code, this_start, this_end, daily_fields_primary)
             last_week = om_archive_daily(code, last_start, last_end, daily_fields_primary)
         except requests.HTTPError as e:
-            # ✅ nếu lỗi do field cloud_cover_mean không hỗ trợ => thử fallback cloud_cover
             resp = getattr(e, "response", None)
             body_text = ""
             try:
@@ -111,11 +106,9 @@ def compare_week(request, province_code: str):
         )
 
     except ValueError as e:
-        # ✅ thường là: không tìm thấy province code hoặc thiếu centroid
         return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     except requests.HTTPError as e:
-        # ✅ Open-Meteo trả 400/500: trả JSON rõ ràng
         resp = getattr(e, "response", None)
         upstream = None
         try:
@@ -132,5 +125,4 @@ def compare_week(request, province_code: str):
         )
 
     except Exception as e:
-        # ✅ không trả HTML debug nữa
         return Response({"detail": f"Server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -48,12 +48,10 @@ def _draw_wrapped(c: canvas.Canvas, text: str, x: int, y: int, max_w: int, font=
 
 
 def fmt_date_vn(d: date) -> str:
-    # ✅ dd/mm/yyyy
     return d.strftime("%d/%m/%Y")
 
 
 def fmt_date_filename(d: date) -> str:
-    # ✅ dd-mm-yyyy (tên file không được có "/")
     return d.strftime("%d-%m-%Y")
 
 
@@ -96,8 +94,6 @@ def admin_export_popup_pdf(request, province_code: str):
         right = 48
         max_w = int(w - left - right)
         y = h - 56
-
-        # Title
         c.setFont("VN-B", 16)
         c.drawString(left, y, "BÁO CÁO THỜI TIẾT (ADMIN)")
         y -= 22

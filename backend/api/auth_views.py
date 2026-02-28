@@ -1,4 +1,3 @@
-# api/auth_views.py
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 
@@ -32,14 +31,11 @@ def register(request):
     try:
         with transaction.atomic():
             user = User.objects.create_user(username=username, email=email, password=password)
-
-            # ✅ auto gán role mặc định = user
             UserRole.objects.create(user=user, role="user")
 
         return Response({"id": user.id, "username": user.username, "email": user.email}, status=status.HTTP_201_CREATED)
 
     except Exception as e:
-        # nếu insert role fail thì rollback cả user
         return Response({"detail": f"Register failed: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 

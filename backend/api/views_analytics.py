@@ -1,4 +1,3 @@
-# api/views_analytics.py
 from datetime import timedelta
 from django.utils import timezone
 from django.db import connection
@@ -36,7 +35,6 @@ def track_region(request):
 @api_view(["GET"])
 @permission_classes([IsAdminUser])
 def top_provinces(request):
-    # query params: ?days=7&source=all
     days = int(request.query_params.get("days", "7"))
     source = request.query_params.get("source", "all")
     since = timezone.now() - timedelta(days=days)
