@@ -12,7 +12,7 @@
 * **Tối ưu hóa dữ liệu:** Sử dụng Supabase để lưu trữ và truy vấn dữ liệu nhanh chóng.
 
 ## 🛠️ Công nghệ sử dụng
-* **Frontend:** Next.js, Leaflet (hiển thị bản đồ).
+* **Frontend:** Next.js, Tailwind CSS, Leaflet (hiển thị bản đồ).
 * **Backend:** Django, Django REST Framework.
 * **Database:** PostgreSQL (Hosted on **Supabase**).
 * **Deployment:** Vercel (Frontend), Railway.app (Backend).
